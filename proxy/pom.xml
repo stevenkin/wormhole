@@ -9,4 +9,17 @@
     <artifactId>proxy</artifactId>
     <name>Archetype - proxy</name>
     <url>http://maven.apache.org</url>
+
+    <dependencies>
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-all</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.github.wandererex</groupId>
+            <artifactId>serialize</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+        </dependency>
+    </dependencies>
 </project>
