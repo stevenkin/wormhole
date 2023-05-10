@@ -19,8 +19,12 @@ public class FrameSerialization implements Serialization<Frame> {
             byteBuf.writeInt(bytes.length);
             byteBuf.writeBytes(bytes);
         }
-        byteBuf.writeInt(msg.getPayload().length);
-        byteBuf.writeBytes(msg.getPayload());
+        if (msg.getPayload() != null) {
+            byteBuf.writeInt(msg.getPayload().length);
+            byteBuf.writeBytes(msg.getPayload());
+        } else {
+            byteBuf.writeInt(0);
+        }
         return byteBuf;
     }
 
