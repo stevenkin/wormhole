@@ -36,6 +36,16 @@ public class ProxyServer {
                             @Override
                             protected void channelRead0(ChannelHandlerContext ctx, Frame msg) throws Exception {
                                 System.out.println("read: " + msg);
+                                if (msg.getOpCode() == 0x1) {
+                                    msg.setOpCode(0x11);
+                                    ctx.writeAndFlush(msg);
+                                    System.out.println("write: " + msg);
+                                }
+                                if (msg.getOpCode() == 0x5) {
+                                    Frame frame = new Frame(0x6, null, null);
+                                    ctx.writeAndFlush(frame);
+                                    System.out.println("write: " + frame);
+                                }
                             }
                         });
                         pipeline.addLast(new LoggingHandler(LogLevel.DEBUG));

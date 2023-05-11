@@ -115,7 +115,7 @@ public class ProxyClient {
 
     public void checkIdle() {
         ScheduledExecutorService scheduledExecutorService = new ScheduledThreadPoolExecutor(2);
-        scheduledExecutorService.schedule(() -> {
+        scheduledExecutorService.scheduleWithFixedDelay(() -> {
             if (lastHeatbeatTime > 0) {
                 if (System.currentTimeMillis() - lastHeatbeatTime > 15000) {
                     try {
@@ -124,11 +124,11 @@ public class ProxyClient {
                     }
                 }
             }
-        }, 5, TimeUnit.SECONDS);
-        scheduledExecutorService.schedule(() -> {
+        }, 5, 5, TimeUnit.SECONDS);
+        scheduledExecutorService.scheduleWithFixedDelay(() -> {
             Frame frame = new Frame(0x5, null, null);
             channel.writeAndFlush(frame);
-        }, 5, TimeUnit.SECONDS);
+        }, 5, 5, TimeUnit.SECONDS);
     }
 
     public void syncAuth() throws InterruptedException {

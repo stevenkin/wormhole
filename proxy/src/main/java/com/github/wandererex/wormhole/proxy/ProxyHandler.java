@@ -56,6 +56,7 @@ public class ProxyHandler extends SimpleChannelInboundHandler<Frame> {
             log.info("proxy connect server success");
             proxyClient.authSuccess();
         } else if (opCode == 0x6) {
+            log.info("proxy update heatbeat time");
             proxyClient.updateHeatbeatTime();
         } else if (opCode == 0x81) {
             log.info("proxy offline success");
