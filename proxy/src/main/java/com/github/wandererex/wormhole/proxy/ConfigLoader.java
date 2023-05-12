@@ -1,6 +1,7 @@
 package com.github.wandererex.wormhole.proxy;
 
 import com.alibaba.fastjson.JSON;
+import com.github.wandererex.wormhole.serialize.ProxyServiceConfig;
 
 import java.io.File;
 import java.io.FileInputStream;

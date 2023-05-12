@@ -1,0 +1,23 @@
+package com.github.wandererex.wormhole.server;
+
+import com.github.wandererex.wormhole.serialize.Frame;
+import com.github.wandererex.wormhole.serialize.FrameSerialization;
+import com.github.wandererex.wormhole.serialize.Serialization;
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.MessageToMessageDecoder;
+
+import java.util.List;
+
+public class PackageDecoder extends MessageToMessageDecoder<ByteBuf> {
+    private Serialization<Frame> serialization = new FrameSerialization();
+
+    public PackageDecoder() {
+    }
+
+    @Override
+    protected void decode(ChannelHandlerContext ctx, ByteBuf byteBuf, List<Object> out) throws Exception {
+        Frame pkg = serialization.deserialize(byteBuf);
+        out.add(pkg);
+    }
+}

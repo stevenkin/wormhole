@@ -1,6 +1,7 @@
 package com.github.wandererex.wormhole.proxy;
 
 import com.github.wandererex.wormhole.serialize.Frame;
+import com.github.wandererex.wormhole.serialize.ProxyServiceConfig;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;

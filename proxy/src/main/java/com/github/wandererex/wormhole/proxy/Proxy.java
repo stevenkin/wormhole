@@ -1,9 +1,12 @@
 package com.github.wandererex.wormhole.proxy;
 
+import com.alibaba.fastjson.JSON;
 import com.github.wandererex.wormhole.serialize.Frame;
+import com.github.wandererex.wormhole.serialize.ProxyServiceConfig;
 import io.netty.channel.Channel;
 import org.apache.commons.lang3.StringUtils;
 
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CountDownLatch;
 
 public class Proxy {
@@ -34,7 +37,8 @@ public class Proxy {
     }
 
     private void online(Channel channel) {
-        Frame frame = new Frame(0x1, null, null);
+        String string = JSON.toJSONString(config);
+        Frame frame = new Frame(0x1, null, string.getBytes(StandardCharsets.UTF_8));
         channel.writeAndFlush(frame);
     }
 
