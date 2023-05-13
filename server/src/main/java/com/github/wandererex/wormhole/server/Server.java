@@ -8,6 +8,7 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
+import org.apache.commons.lang3.StringUtils;
 
 public class Server {
     private int port;
@@ -63,6 +64,21 @@ public class Server {
     }
 
     public static void main(String[] args) {
-        new Server(8090).open();
+        String port = null;
+        if (args != null && args.length > 0) {
+            for (int i = 0; i < args.length; i++) {
+                if (StringUtils.isNotEmpty(args[i]) && args[i].equals("--port")) {
+                    if (i + 1 < args.length) {
+                        String arg = args[i + 1];
+                        if (StringUtils.isNotEmpty(arg)) {
+                            port = arg;
+                        }
+                    }
+                }
+            }
+            if (port != null) {
+                new Server(Integer.parseInt(port)).open();
+            }
+        }
     }
 }

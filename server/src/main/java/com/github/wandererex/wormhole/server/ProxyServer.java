@@ -2,10 +2,12 @@ package com.github.wandererex.wormhole.server;
 
 import com.github.wandererex.wormhole.serialize.Frame;
 import io.netty.bootstrap.ServerBootstrap;
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.codec.FixedLengthFrameDecoder;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 
@@ -18,10 +20,17 @@ public class ProxyServer {
 
     private Channel proxyChannel;
 
+    private ForwardHandler forwardHandler;
+
     public ProxyServer(String serviceKey, Integer mappingPort, Channel proxyChannel) {
         this.serviceKey = serviceKey;
         this.mappingPort = mappingPort;
         this.proxyChannel = proxyChannel;
+        this.forwardHandler = new ForwardHandler(serviceKey, proxyChannel);
+    }
+
+    public void send(byte[] buf) {
+        forwardHandler.send(buf);
     }
 
     public void open() {
@@ -35,7 +44,8 @@ public class ProxyServer {
                 .childHandler(new ChannelInitializer<NioSocketChannel>() {
                     protected void initChannel(NioSocketChannel ch) throws Exception {
                         ChannelPipeline pipeline = ch.pipeline();
-                        pipeline.addLast(new ForwardHandler(serviceKey, proxyChannel));
+                        pipeline.addLast(new FixedLengthFrameDecoder(20));
+                        pipeline.addLast(forwardHandler);
                         pipeline.addLast(new LoggingHandler(LogLevel.DEBUG));
                     }
                 });

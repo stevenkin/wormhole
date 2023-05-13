@@ -31,24 +31,26 @@ public class ProxyHandler extends SimpleChannelInboundHandler<Frame> {
         if (opCode == 0x9) {
             ProxyServiceConfig.ServiceConfig serviceConfig = config.getServiceConfig(serviceKey);
             ProxyClient proxyClient = new ProxyClient(null);
+            proxyClient.setChannel1(ctx.channel());
+            proxyClient.setServiceKey(serviceKey);
             try {
                 Channel channel = proxyClient.connect(serviceConfig.getIp(), serviceConfig.getPort());
                 map.put(serviceKey, channel);
                 Frame frame = new Frame(0x91, serviceKey, null);
-                ctx.write(frame);
+                ctx.writeAndFlush(frame);
             } catch (Exception e) {
                 Frame frame = new Frame(0x90, serviceKey, null);
-                ctx.write(frame);
+                ctx.writeAndFlush(frame);
             }
         } else if (opCode == 0x3) {
             Channel channel = map.get(serviceKey);
             if (channel == null) {
                 Frame frame = new Frame(0x40, serviceKey, null);
-                ctx.write(frame);
+                ctx.writeAndFlush(frame);
             } else {
                 channel.writeAndFlush(payload);
                 Frame frame = new Frame(0x41, serviceKey, null);
-                ctx.write(frame);
+                ctx.writeAndFlush(frame);
             }
         } else if (opCode == 0x10) {
             log.error("proxy connect server error");

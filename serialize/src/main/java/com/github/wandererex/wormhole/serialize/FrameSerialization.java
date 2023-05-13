@@ -18,6 +18,8 @@ public class FrameSerialization implements Serialization<Frame> {
             byte[] bytes = msg.getServiceKey().getBytes(StandardCharsets.UTF_8);
             byteBuf.writeInt(bytes.length);
             byteBuf.writeBytes(bytes);
+        } else {
+            byteBuf.writeInt(0);
         }
         if (msg.getPayload() != null) {
             byteBuf.writeInt(msg.getPayload().length);
@@ -40,6 +42,7 @@ public class FrameSerialization implements Serialization<Frame> {
             String serviceKey = new String(bytes, StandardCharsets.UTF_8);
             frame.setServiceKey(serviceKey);
         }
+        n = byteBuf.readInt();
         if (n > 0) {
             bytes = new byte[n];
             byteBuf.readBytes(bytes, 0, n);

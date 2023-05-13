@@ -22,4 +22,8 @@ public class ProxyServiceConfig {
     public Map<String, ServiceConfig> getServiceConfigMap() {
         return new HashMap<>(map);
     }
+
+    public void addConfig(String key, ServiceConfig config) {
+        map.put(key, config);
+    }
 }
