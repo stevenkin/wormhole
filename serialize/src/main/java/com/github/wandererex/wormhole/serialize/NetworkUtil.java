@@ -1,4 +1,4 @@
-package com.github.wandererex.wormhole.proxy;
+package com.github.wandererex.wormhole.serialize;
 
 
 import lombok.extern.slf4j.Slf4j;
@@ -276,5 +276,26 @@ public class NetworkUtil {
             return true;
         }
         return false;
+    }
+
+    public static List<Frame> byteArraytoFrameList(byte[] array, String serviceKey) {
+        int n = 0;
+        byte[] bytes = new byte[1024];
+        List<Frame> frames = new ArrayList<>();
+        for (int i = 0; i < array.length; i += n) {
+            if (i + 1024 < array.length) {
+                System.arraycopy(array, i, bytes, 0, 1024);
+                n = 1024;
+                Frame frame = new Frame(0x3, serviceKey, bytes);
+                frames.add(frame);
+            } else {
+                byte[] bytes1 = new byte[array.length - i];
+                System.arraycopy(array, i, bytes1, 0, bytes1.length);
+                n = bytes1.length;
+                Frame frame = new Frame(0x3, serviceKey, bytes1);
+                frames.add(frame);
+            }
+        }
+        return frames;
     }
 }

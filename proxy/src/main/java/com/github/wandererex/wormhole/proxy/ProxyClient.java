@@ -1,18 +1,18 @@
 package com.github.wandererex.wormhole.proxy;
 
-import com.github.wandererex.wormhole.serialize.Frame;
-import com.github.wandererex.wormhole.serialize.ProxyServiceConfig;
+import com.github.wandererex.wormhole.serialize.*;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.handler.codec.FixedLengthFrameDecoder;
+import io.netty.handler.codec.bytes.ByteArrayEncoder;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -49,16 +49,24 @@ public class ProxyClient {
                         @Override
                         public void initChannel(SocketChannel ch) {
                             //ch.pipeline().addLast("idleStateHandler", new IdleStateHandler(10 * 3, 15 * 3, 20 * 3));
-                            ch.pipeline().addLast(new FixedLengthFrameDecoder(20));
+                            //ch.pipeline().addLast(new FixedLengthFrameDecoder(20));
                             ch.pipeline().addLast(new SimpleChannelInboundHandler<ByteBuf>() {
-
+                                @Override
+                                public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+                                    Frame frame = new Frame(0xB, serviceKey, null);
+                                    channel1.writeAndFlush(frame);
+                                    ctx.fireChannelInactive();
+                                }
                                 @Override
                                 protected void channelRead0(ChannelHandlerContext ctx, ByteBuf msg) throws Exception {
                                     if (channel1 != null) {
                                         byte[] bytes = new byte[msg.readableBytes()];
                                         msg.readBytes(bytes, 0, bytes.length);
-                                        Frame frame = new Frame(0x3, serviceKey, bytes);
-                                        channel1.writeAndFlush(frame);
+                                        List<Frame> frames = NetworkUtil.byteArraytoFrameList(bytes, serviceKey);
+                                        log.info("proxy read from service data {}", bytes);
+                                        for (Frame frame : frames) {
+                                            TaskExecutor.get().addTask(new Task(channel1, frame));
+                                        }
                                     }
                                 }
                             });

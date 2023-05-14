@@ -2,6 +2,11 @@ package com.github.wandererex.wormhole.proxy;
 
 import com.github.wandererex.wormhole.serialize.Frame;
 import com.github.wandererex.wormhole.serialize.ProxyServiceConfig;
+import com.github.wandererex.wormhole.serialize.Task;
+import com.github.wandererex.wormhole.serialize.TaskExecutor;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.PooledByteBufAllocator;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
@@ -48,7 +53,8 @@ public class ProxyHandler extends SimpleChannelInboundHandler<Frame> {
                 Frame frame = new Frame(0x40, serviceKey, null);
                 ctx.writeAndFlush(frame);
             } else {
-                channel.writeAndFlush(payload);
+                log.info("proxy send to service data {}", payload);
+                TaskExecutor.get().addTask(new Task(channel, Unpooled.copiedBuffer(payload)));
                 Frame frame = new Frame(0x41, serviceKey, null);
                 ctx.writeAndFlush(frame);
             }
@@ -71,6 +77,12 @@ public class ProxyHandler extends SimpleChannelInboundHandler<Frame> {
             Frame frame = new Frame(0x81, null, null);
             proxyClient.send(frame);
             close();
+        } else if (opCode == 0xA) {
+            log.info("server offline");
+            Channel channel = map.get(serviceKey);
+            if (channel != null) {
+                channel.close();
+            }
         }
     }
 
