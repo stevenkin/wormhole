@@ -75,8 +75,21 @@
         <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>  
+                <source>1.8</source>  
+                <target>1.8</target>  
+                <encoding>UTF-8</encoding><!-- 指定编码格式，否则在DOS下运行mvn compile命令时会出现莫名的错误，因为系统默认使用GBK编码 -->  
+              </configuration> 
         <version>2.3.2</version>
         </plugin>
+        <plugin>  
+              <groupId>org.apache.maven.plugins</groupId>  
+               <artifactId>maven-resources-plugin</artifactId>  
+               <version>2.6</version>  
+               <configuration>  
+                   <encoding>UTF-8</encoding><!-- 指定编码格式，否则在DOS下运行mvn命令时当发生文件资源copy时将使用系统默认使用GBK编码 -->  
+               </configuration>  
+           </plugin>  
     </plugins>
     </build>
 
