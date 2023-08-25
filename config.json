@@ -2,11 +2,11 @@
   "mysql": {
     "ip": "127.0.0.1",
     "port": "3306",
-    "mappingPort": "3307"
+    "mappingPort": "3308"
   },
   "ssh": {
     "ip": "127.0.0.1",
     "port": "22",
-    "mappingPort": "2200"
+    "mappingPort": "2201"
   }
 }

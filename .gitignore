@@ -57,6 +57,10 @@ hs_err_pid*
 /target/
 .idea/
 
+#vscode
+target/
+.vscode
+
 # mpeltonen/sbt-idea plugin
 .idea_modules/
 
@@ -126,3 +130,4 @@ local.properties
 .scala_dependencies
 .worksheet
 
+proxy/.DS_Store
