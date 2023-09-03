@@ -5,6 +5,7 @@ import lombok.Data;
 import java.util.HashMap;
 import java.util.Map;
 
+@Data
 public class ProxyServiceConfig {
     @Data
     public static class ServiceConfig {
@@ -14,6 +15,10 @@ public class ProxyServiceConfig {
     }
 
     private Map<String, ServiceConfig> map = new HashMap<>();
+
+    private String serverHost;
+
+    private Integer serverPort;
 
     public  ServiceConfig getServiceConfig(String serviceKey) {
         return map.get(serviceKey);

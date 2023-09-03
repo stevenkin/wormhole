@@ -14,15 +14,18 @@ import java.util.Map;
 
 public class ConfigLoader {
     public static ProxyServiceConfig load(String path) throws IOException {
-        File file = new File(path);
-        InputStream inputStream = new FileInputStream(file);
+        InputStream inputStream = ConfigLoader.class.getResourceAsStream(path);
         byte[] bytes = IOUtils.toByteArray(inputStream);
         String s = new String(bytes, StandardCharsets.UTF_8);
         JSONObject jsonObject = JSON.parseObject(s);
         ProxyServiceConfig proxyServiceConfig = new ProxyServiceConfig();
         for (Map.Entry<String, Object> entry : jsonObject.entrySet()) {
-            proxyServiceConfig.addConfig(entry.getKey(), ((JSONObject)entry.getValue()).toJavaObject(ProxyServiceConfig.ServiceConfig.class));
+            if (entry.getValue() instanceof  JSONObject) {
+                proxyServiceConfig.addConfig(entry.getKey(), ((JSONObject) entry.getValue()).toJavaObject(ProxyServiceConfig.ServiceConfig.class));
+            }
         }
+        proxyServiceConfig.setServerHost(jsonObject.getString("serverHost"));
+        proxyServiceConfig.setServerPort(jsonObject.getInteger("serverPort"));
         return proxyServiceConfig;
     }
 }
