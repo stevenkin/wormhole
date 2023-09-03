@@ -88,7 +88,7 @@ public class ProxyClient {
                             ch.pipeline().addLast(new PackageDecoder());
                             ch.pipeline().addLast(new PackageEncoder());
                             ch.pipeline().addLast(new ProxyHandler(ProxyClient.this, config));
-                            ch.pipeline().addLast("logs", new LoggingHandler(LogLevel.DEBUG));
+                            ch.pipeline().addLast("logs", new LoggingHandler(LogLevel.ERROR));
                         }
                     });
         }
