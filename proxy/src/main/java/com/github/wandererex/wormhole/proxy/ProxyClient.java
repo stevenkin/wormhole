@@ -70,7 +70,7 @@ public class ProxyClient {
                                     }
                                 }
                             });
-                            ch.pipeline().addLast("logs", new LoggingHandler(LogLevel.DEBUG));
+                            ch.pipeline().addLast("logs", new LoggingHandler(LogLevel.ERROR));
                         }
                     });
         }

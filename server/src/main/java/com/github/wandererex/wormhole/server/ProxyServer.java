@@ -83,7 +83,7 @@ public class ProxyServer {
                         });
                         //pipeline.addLast(new FixedLengthFrameDecoder(20));
                         pipeline.addLast(forwardHandler);
-                        pipeline.addLast(new LoggingHandler(LogLevel.DEBUG));
+                        pipeline.addLast(new LoggingHandler(LogLevel.ERROR));
                     }
                 });
 
