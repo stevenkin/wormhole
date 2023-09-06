@@ -23,10 +23,11 @@ public class Proxy {
 
     private ProxyClient client;
 
-    public Proxy(String serverHost, Integer serverPort, String configPath) throws Exception {
-        this.serverHost = serverHost;
-        this.serverPort = serverPort;
+    public Proxy() throws Exception {
+        String configPath = "/config.json";
         this.config = ConfigLoader.load(configPath);
+        this.serverHost = config.getServerHost();
+        this.serverPort = config.getServerPort();
         client = new ProxyClient(config);
     }
 
@@ -49,40 +50,7 @@ public class Proxy {
     }
 
     public static void main(String[] args) throws Exception {
-        String serverHost = null;
-        String serverPort = null;
-        String configPath = null;
-        if (args != null && args.length > 0) {
-            for (int i = 0; i < args.length; i++) {
-               if (StringUtils.isNotEmpty(args[i]) && args[i].equals("--configPath")) {
-                   if (i + 1 < args.length) {
-                       String arg = args[i + 1];
-                       if (StringUtils.isNotEmpty(arg)) {
-                           configPath = arg;
-                       }
-                   }
-               }
-               if (StringUtils.isNotEmpty(args[i]) && args[i].equals("--serverHost")) {
-                    if (i + 1 < args.length) {
-                        String arg = args[i + 1];
-                        if (StringUtils.isNotEmpty(arg)) {
-                            serverHost = arg;
-                        }
-                    }
-               }
-               if (StringUtils.isNotEmpty(args[i]) && args[i].equals("--serverPort")) {
-                    if (i + 1 < args.length) {
-                        String arg = args[i + 1];
-                        if (StringUtils.isNotEmpty(arg)) {
-                            serverPort = arg;
-                        }
-                    }
-               }
-            }
-            if (serverHost != null && serverPort != null && configPath != null) {
-                Proxy proxy = new Proxy(serverHost, Integer.parseInt(serverPort), configPath);
-                proxy.start();
-            }
-        }
+        Proxy proxy = new Proxy();
+        proxy.start();
     }
 }
