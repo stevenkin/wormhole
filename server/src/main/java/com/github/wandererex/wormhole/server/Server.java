@@ -35,7 +35,7 @@ public class Server {
                         pipeline.addLast(new PackageEncoder());
                         pipeline.addLast(new ProxyServerHandler() {
                         });
-                        pipeline.addLast(new LoggingHandler(LogLevel.ERROR));
+                        pipeline.addLast(new LoggingHandler(LogLevel.DEBUG));
                     }
                 });
 
