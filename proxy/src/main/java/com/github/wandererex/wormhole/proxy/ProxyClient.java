@@ -95,7 +95,6 @@ public class ProxyClient {
                         }
                     });
         }
-        checkIdle();
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             Proxy.latch.countDown();
             clientGroup.shutdownGracefully().syncUninterruptibly();
