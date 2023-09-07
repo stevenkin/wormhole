@@ -33,6 +33,7 @@ public class ProxyHandler extends SimpleChannelInboundHandler<Frame> {
         int opCode = msg.getOpCode();
         String serviceKey = msg.getServiceKey();
         byte[] payload = msg.getPayload();
+        proxyClient.updateHeatbeatTime();
         if (opCode == 0x9) {
             ProxyServiceConfig.ServiceConfig serviceConfig = config.getServiceConfig(serviceKey);
             ProxyClient proxyClient = new ProxyClient(null);
@@ -66,7 +67,6 @@ public class ProxyHandler extends SimpleChannelInboundHandler<Frame> {
             proxyClient.authSuccess();
         } else if (opCode == 0x6) {
             log.info("proxy update heatbeat time");
-            proxyClient.updateHeatbeatTime();
         } else if (opCode == 0x81) {
             log.info("proxy offline success");
             close();

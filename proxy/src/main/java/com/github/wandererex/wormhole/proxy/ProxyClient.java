@@ -37,6 +37,8 @@ public class ProxyClient {
 
     private ChannelPromise channelPromise;
 
+    private ScheduledExecutorService scheduledExecutorService;
+
     public ProxyClient(ProxyServiceConfig config) {
         this.clientBootstrap = new Bootstrap();
         this.clientGroup = new NioEventLoopGroup();
@@ -59,6 +61,7 @@ public class ProxyClient {
                                 }
                                 @Override
                                 protected void channelRead0(ChannelHandlerContext ctx, ByteBuf msg) throws Exception {
+                                    updateHeatbeatTime();
                                     if (channel1 != null) {
                                         byte[] bytes = new byte[msg.readableBytes()];
                                         msg.readBytes(bytes, 0, bytes.length);
@@ -92,6 +95,7 @@ public class ProxyClient {
                         }
                     });
         }
+        checkIdle();
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             Proxy.latch.countDown();
             clientGroup.shutdownGracefully().syncUninterruptibly();
@@ -156,6 +160,7 @@ public class ProxyClient {
     public void shutdown() throws Exception {
         disconnect();
         clientGroup.shutdownGracefully().syncUninterruptibly();
+        scheduledExecutorService.shutdown();
         Proxy.latch.countDown();
     }
 
@@ -164,7 +169,7 @@ public class ProxyClient {
     }
 
     public void checkIdle() {
-        ScheduledExecutorService scheduledExecutorService = new ScheduledThreadPoolExecutor(2);
+        scheduledExecutorService = new ScheduledThreadPoolExecutor(2);
         scheduledExecutorService.scheduleWithFixedDelay(() -> {
             if (lastHeatbeatTime > 0) {
                 if (System.currentTimeMillis() - lastHeatbeatTime > 15000) {
