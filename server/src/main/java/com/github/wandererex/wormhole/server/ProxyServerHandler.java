@@ -12,6 +12,7 @@ import io.netty.util.Attribute;
 import io.netty.util.AttributeKey;
 import lombok.extern.slf4j.Slf4j;
 
+import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
@@ -23,6 +24,7 @@ public class ProxyServerHandler extends SimpleChannelInboundHandler<Frame> {
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, Frame msg) throws Exception {
         System.out.println("read: " + msg);
+        InetSocketAddress localAddress = (InetSocketAddress) ctx.channel().localAddress();
         if (msg.getOpCode() == 0x1) {
             byte[] payload = msg.getPayload();
             String s = new String(payload, StandardCharsets.UTF_8);
@@ -37,7 +39,7 @@ public class ProxyServerHandler extends SimpleChannelInboundHandler<Frame> {
             System.out.println("write: " + msg);
         }
         if (msg.getOpCode() == 0x5) {
-            Frame frame = new Frame(0x6, null, null);
+            Frame frame = new Frame(0x6, null, localAddress.toString(), null);
             ctx.writeAndFlush(frame);
             System.out.println("write: " + frame);
         }
@@ -53,9 +55,9 @@ public class ProxyServerHandler extends SimpleChannelInboundHandler<Frame> {
             log.info("server read from proxy data {}", msg);
             ProxyServer proxyServer = proxyServerMap.get(msg.getServiceKey());
             if (proxyServer != null) {
-                proxyServer.send(msg.getPayload());
+                proxyServer.send(msg);
             }
-            Frame frame = new Frame(0x41, null, null);
+            Frame frame = new Frame(0x41, null, localAddress.toString(), null);
             ctx.writeAndFlush(frame);
             System.out.println("write: " + frame);
         }

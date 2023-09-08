@@ -16,5 +16,7 @@ public class Frame {
 
     private String serviceKey;
 
+    private String realClientAddress;
+
     private byte[] payload;
 }

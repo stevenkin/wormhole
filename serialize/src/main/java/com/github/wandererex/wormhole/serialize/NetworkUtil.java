@@ -278,7 +278,7 @@ public class NetworkUtil {
         return false;
     }
 
-    public static List<Frame> byteArraytoFrameList(byte[] array, String serviceKey) {
+    public static List<Frame> byteArraytoFrameList(byte[] array, String serviceKey, String address) {
         int n = 0;
         byte[] bytes = new byte[1024];
         List<Frame> frames = new ArrayList<>();
@@ -286,13 +286,13 @@ public class NetworkUtil {
             if (i + 1024 < array.length) {
                 System.arraycopy(array, i, bytes, 0, 1024);
                 n = 1024;
-                Frame frame = new Frame(0x3, serviceKey, bytes);
+                Frame frame = new Frame(0x3, serviceKey, address, bytes);
                 frames.add(frame);
             } else {
                 byte[] bytes1 = new byte[array.length - i];
                 System.arraycopy(array, i, bytes1, 0, bytes1.length);
                 n = bytes1.length;
-                Frame frame = new Frame(0x3, serviceKey, bytes1);
+                Frame frame = new Frame(0x3, serviceKey, address, bytes1);
                 frames.add(frame);
             }
         }

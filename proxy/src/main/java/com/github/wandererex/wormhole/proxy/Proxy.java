@@ -7,6 +7,7 @@ import com.github.wandererex.wormhole.serialize.ProxyServiceConfig;
 import io.netty.channel.Channel;
 import org.apache.commons.lang3.StringUtils;
 
+import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -45,7 +46,8 @@ public class Proxy {
             jsonObject.put(entry.getKey(), JSON.toJSONString(entry.getValue()));
         }
         String string = jsonObject.toJSONString();
-        Frame frame = new Frame(0x1, null, string.getBytes(StandardCharsets.UTF_8));
+        InetSocketAddress localAddress = (InetSocketAddress) channel.localAddress();
+        Frame frame = new Frame(0x1, null, localAddress.toString(), string.getBytes(StandardCharsets.UTF_8));
         channel.writeAndFlush(frame);
     }
 

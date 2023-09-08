@@ -21,6 +21,10 @@ import io.netty.handler.logging.LoggingHandler;
 import io.netty.util.Attribute;
 import io.netty.util.AttributeKey;
 
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
 public class ProxyServer {
@@ -43,11 +47,12 @@ public class ProxyServer {
         this.forwardHandler = new ForwardHandler(serviceKey, proxyChannel);
     }
 
-    public void send(byte[] buf) {
+    public void send(Frame msg) {
+
         if (channel == null) {
             return;
         }
-        TaskExecutor.get().addTask(new Task(channel, Unpooled.copiedBuffer(buf)));
+        forwardHandler.send(msg);
     }
 
     public void open() {
@@ -64,10 +69,11 @@ public class ProxyServer {
                         pipeline.addLast(new ChannelInboundHandlerAdapter() {
                             @Override
                             public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
-                                Frame frame = new Frame(0x9, serviceKey, null);
+                                String address = ((InetSocketAddress)(channel.remoteAddress())).toString();
+                                Frame frame = new Frame(0x9, serviceKey, address, null);
                                 CountDownLatch latch = new CountDownLatch(1);
                                 channel = ctx.channel();
-                                forwardHandler.setChannel(channel);
+                                forwardHandler.setChannel(address, channel);
                                 AttributeKey<CountDownLatch> attributeKey = AttributeKey.valueOf(serviceKey);
                                 Attribute<CountDownLatch> attr = proxyChannel.attr(attributeKey);
                                 attr.set(latch);
@@ -76,7 +82,8 @@ public class ProxyServer {
 
                             @Override
                             public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-                                Frame frame = new Frame(0xA, serviceKey, null);
+                                String address = ((InetSocketAddress)(channel.remoteAddress())).toString();
+                                Frame frame = new Frame(0xA, serviceKey, address, null);
                                 proxyChannel.writeAndFlush(frame);
                                 ctx.fireChannelInactive();
                             }

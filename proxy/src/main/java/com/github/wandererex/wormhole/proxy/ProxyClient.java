@@ -12,6 +12,8 @@ import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import lombok.extern.slf4j.Slf4j;
 
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -55,7 +57,8 @@ public class ProxyClient {
                             ch.pipeline().addLast(new SimpleChannelInboundHandler<ByteBuf>() {
                                 @Override
                                 public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-                                    Frame frame = new Frame(0xB, serviceKey, null);
+                                    InetSocketAddress remoteAddress = (InetSocketAddress) ctx.channel().remoteAddress();
+                                    Frame frame = new Frame(0xB, serviceKey, remoteAddress.toString(), null);
                                     channel1.writeAndFlush(frame);
                                     ctx.fireChannelInactive();
                                 }
@@ -180,7 +183,8 @@ public class ProxyClient {
             }
         }, 5, 5, TimeUnit.SECONDS);
         scheduledExecutorService.scheduleWithFixedDelay(() -> {
-            Frame frame = new Frame(0x5, null, null);
+            InetSocketAddress remoteAddress = (InetSocketAddress) channel.remoteAddress();
+            Frame frame = new Frame(0x5, null, remoteAddress.toString(), null);
             channel.writeAndFlush(frame);
         }, 5, 5, TimeUnit.SECONDS);
     }

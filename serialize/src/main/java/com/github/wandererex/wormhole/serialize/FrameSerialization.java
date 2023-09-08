@@ -21,6 +21,13 @@ public class FrameSerialization implements Serialization<Frame> {
         } else {
             byteBuf.writeInt(0);
         }
+        if (StringUtils.isNotEmpty(msg.getRealClientAddress())) {
+            byte[] bytes = msg.getRealClientAddress().getBytes(StandardCharsets.UTF_8);
+            byteBuf.writeInt(bytes.length);
+            byteBuf.writeBytes(bytes);
+        } else {
+            byteBuf.writeInt(0);
+        }
         if (msg.getPayload() != null) {
             byteBuf.writeInt(msg.getPayload().length);
             byteBuf.writeBytes(msg.getPayload());
@@ -41,6 +48,13 @@ public class FrameSerialization implements Serialization<Frame> {
             byteBuf.readBytes(bytes, 0, n);
             String serviceKey = new String(bytes, StandardCharsets.UTF_8);
             frame.setServiceKey(serviceKey);
+        }
+        n = byteBuf.readInt();
+        if (n > 0) {
+            bytes = new byte[n];
+            byteBuf.readBytes(bytes, 0, n);
+            String realClientAddress = new String(bytes, StandardCharsets.UTF_8);
+            frame.setRealClientAddress(realClientAddress);
         }
         n = byteBuf.readInt();
         if (n > 0) {

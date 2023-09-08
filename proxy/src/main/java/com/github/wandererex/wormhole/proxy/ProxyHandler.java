@@ -12,6 +12,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import lombok.extern.slf4j.Slf4j;
 
+import java.net.InetSocketAddress;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -34,6 +35,8 @@ public class ProxyHandler extends SimpleChannelInboundHandler<Frame> {
         String serviceKey = msg.getServiceKey();
         byte[] payload = msg.getPayload();
         proxyClient.updateHeatbeatTime();
+        InetSocketAddress localAddress = (InetSocketAddress) ctx.channel().localAddress();
+        String address = msg.getRealClientAddress();
         if (opCode == 0x9) {
             ProxyServiceConfig.ServiceConfig serviceConfig = config.getServiceConfig(serviceKey);
             ProxyClient proxyClient = new ProxyClient(null);
@@ -41,22 +44,22 @@ public class ProxyHandler extends SimpleChannelInboundHandler<Frame> {
             proxyClient.setServiceKey(serviceKey);
             try {
                 Channel channel = proxyClient.connect(serviceConfig.getIp(), serviceConfig.getPort());
-                map.put(serviceKey, channel);
-                Frame frame = new Frame(0x91, serviceKey, null);
+                map.put(address, channel);
+                Frame frame = new Frame(0x91, serviceKey, localAddress.toString(), null);
                 ctx.writeAndFlush(frame);
             } catch (Exception e) {
-                Frame frame = new Frame(0x90, serviceKey, null);
+                Frame frame = new Frame(0x90, serviceKey,  localAddress.toString(), null);
                 ctx.writeAndFlush(frame);
             }
         } else if (opCode == 0x3) {
-            Channel channel = map.get(serviceKey);
+            Channel channel = map.get(address);
             if (channel == null) {
-                Frame frame = new Frame(0x40, serviceKey, null);
+                Frame frame = new Frame(0x40, serviceKey, localAddress.toString(), null);
                 ctx.writeAndFlush(frame);
             } else {
                 log.info("proxy send to service data {}", payload);
                 TaskExecutor.get().addTask(new Task(channel, Unpooled.copiedBuffer(payload)));
-                Frame frame = new Frame(0x41, serviceKey, null);
+                Frame frame = new Frame(0x41, serviceKey, localAddress.toString(), null);
                 ctx.writeAndFlush(frame);
             }
         } else if (opCode == 0x10) {
@@ -74,7 +77,7 @@ public class ProxyHandler extends SimpleChannelInboundHandler<Frame> {
             log.error("proxy offline error");
         } else if (opCode == 0x7) {
             log.info("server offline");
-            Frame frame = new Frame(0x81, null, null);
+            Frame frame = new Frame(0x81, null, localAddress.toString(), null);
             proxyClient.send(frame);
             close();
         } else if (opCode == 0xA) {
