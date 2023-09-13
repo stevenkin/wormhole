@@ -48,10 +48,6 @@ public class ProxyServer {
     }
 
     public void send(Frame msg) {
-
-        if (channel == null) {
-            return;
-        }
         forwardHandler.send(msg);
     }
 
@@ -69,7 +65,7 @@ public class ProxyServer {
                         pipeline.addLast(new ChannelInboundHandlerAdapter() {
                             @Override
                             public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
-                                String address = ((InetSocketAddress)(channel.remoteAddress())).toString();
+                                String address = ((InetSocketAddress)(ctx.channel().remoteAddress())).toString();
                                 Frame frame = new Frame(0x9, serviceKey, address, null);
                                 CountDownLatch latch = new CountDownLatch(1);
                                 channel = ctx.channel();
@@ -82,7 +78,7 @@ public class ProxyServer {
 
                             @Override
                             public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-                                String address = ((InetSocketAddress)(channel.remoteAddress())).toString();
+                                String address = ((InetSocketAddress)(ctx.channel().remoteAddress())).toString();
                                 Frame frame = new Frame(0xA, serviceKey, address, null);
                                 proxyChannel.writeAndFlush(frame);
                                 ctx.fireChannelInactive();

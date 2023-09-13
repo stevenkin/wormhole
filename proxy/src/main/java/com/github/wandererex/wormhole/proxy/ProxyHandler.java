@@ -42,6 +42,7 @@ public class ProxyHandler extends SimpleChannelInboundHandler<Frame> {
             ProxyClient proxyClient = new ProxyClient(null);
             proxyClient.setChannel1(ctx.channel());
             proxyClient.setServiceKey(serviceKey);
+            proxyClient.setReadAddress(address);
             try {
                 Channel channel = proxyClient.connect(serviceConfig.getIp(), serviceConfig.getPort());
                 map.put(address, channel);
@@ -82,7 +83,7 @@ public class ProxyHandler extends SimpleChannelInboundHandler<Frame> {
             close();
         } else if (opCode == 0xA) {
             log.info("server offline");
-            Channel channel = map.get(serviceKey);
+            Channel channel = map.get(address);
             if (channel != null) {
                 channel.close();
             }
