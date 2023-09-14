@@ -42,7 +42,7 @@ public class ProxyHandler extends SimpleChannelInboundHandler<Frame> {
             ProxyClient proxyClient = new ProxyClient(null);
             proxyClient.setChannel1(ctx.channel());
             proxyClient.setServiceKey(serviceKey);
-            proxyClient.setReadAddress(address);
+            proxyClient.setRealAddress(address);
             try {
                 Channel channel = proxyClient.connect(serviceConfig.getIp(), serviceConfig.getPort());
                 map.put(address, channel);

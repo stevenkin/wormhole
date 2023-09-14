@@ -114,4 +114,8 @@ public class ProxyServer {
         }
         channel.close();
     }
+
+    public void closeChannel(Frame msg) {
+        forwardHandler.closeChannel(msg);
+    }
 }

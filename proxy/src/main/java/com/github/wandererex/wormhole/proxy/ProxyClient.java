@@ -31,7 +31,7 @@ public class ProxyClient {
 
     private String serviceKey;
 
-    private String readAddress;
+    private String realAddress;
 
     private volatile boolean connectSuccess = false;
 
@@ -59,8 +59,7 @@ public class ProxyClient {
                             ch.pipeline().addLast(new SimpleChannelInboundHandler<ByteBuf>() {
                                 @Override
                                 public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-                                    InetSocketAddress remoteAddress = (InetSocketAddress) ctx.channel().remoteAddress();
-                                    Frame frame = new Frame(0xB, serviceKey, remoteAddress.toString(), null);
+                                    Frame frame = new Frame(0xB, serviceKey, realAddress, null);
                                     channel1.writeAndFlush(frame);
                                     ctx.fireChannelInactive();
                                 }
@@ -70,7 +69,7 @@ public class ProxyClient {
                                     if (channel1 != null) {
                                         byte[] bytes = new byte[msg.readableBytes()];
                                         msg.readBytes(bytes, 0, bytes.length);
-                                        List<Frame> frames = NetworkUtil.byteArraytoFrameList(bytes, serviceKey, readAddress);
+                                        List<Frame> frames = NetworkUtil.byteArraytoFrameList(bytes, serviceKey, realAddress);
                                         log.info("proxy read from service data {}", bytes);
                                         for (Frame frame : frames) {
                                             TaskExecutor.get().addTask(new Task(channel1, frame));
@@ -221,10 +220,6 @@ public class ProxyClient {
         return serviceKey;
     }
 
-    public String getReadAddress() {
-        return readAddress;
-    }
-
     public boolean isConnectSuccess() {
         return connectSuccess;
     }
@@ -257,9 +252,6 @@ public class ProxyClient {
         this.channel = channel;
     }
 
-    public void setReadAddress(String readAddress) {
-        this.readAddress = readAddress;
-    }
 
     public void setConnectSuccess(boolean connectSuccess) {
         this.connectSuccess = connectSuccess;
@@ -279,6 +271,14 @@ public class ProxyClient {
 
     public void setScheduledExecutorService(ScheduledExecutorService scheduledExecutorService) {
         this.scheduledExecutorService = scheduledExecutorService;
+    }
+
+    public String getRealAddress() {
+        return realAddress;
+    }
+
+    public void setRealAddress(String realAddress) {
+        this.realAddress = realAddress;
     }
 
     
