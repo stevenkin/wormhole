@@ -43,3 +43,6 @@ java -jar proxy-1.0.0-SNAPSHOT-jar-with-dependencies.jar --serverHost 127.0.0.1 
 ### 运行实例
 ![这是图片](./WX20230515-105120@2x.png "这是图片")
 
+### 性能测试
+![这是图片](./20230907105048.png "这是图片")
+
