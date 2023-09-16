@@ -31,6 +31,8 @@ public class ProxyClient {
 
     private String serviceKey;
 
+    private String realAddress;
+
     private volatile boolean connectSuccess = false;
 
     private volatile boolean authSuccess = false;
@@ -57,8 +59,7 @@ public class ProxyClient {
                             ch.pipeline().addLast(new SimpleChannelInboundHandler<ByteBuf>() {
                                 @Override
                                 public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-                                    InetSocketAddress remoteAddress = (InetSocketAddress) ctx.channel().remoteAddress();
-                                    Frame frame = new Frame(0xB, serviceKey, remoteAddress.toString(), null);
+                                    Frame frame = new Frame(0xB, serviceKey, realAddress, null);
                                     channel1.writeAndFlush(frame);
                                     ctx.fireChannelInactive();
                                 }
@@ -68,7 +69,7 @@ public class ProxyClient {
                                     if (channel1 != null) {
                                         byte[] bytes = new byte[msg.readableBytes()];
                                         msg.readBytes(bytes, 0, bytes.length);
-                                        List<Frame> frames = NetworkUtil.byteArraytoFrameList(bytes, serviceKey);
+                                        List<Frame> frames = NetworkUtil.byteArraytoFrameList(bytes, serviceKey, realAddress);
                                         log.info("proxy read from service data {}", bytes);
                                         for (Frame frame : frames) {
                                             TaskExecutor.get().addTask(new Task(channel1, frame));
@@ -111,6 +112,8 @@ public class ProxyClient {
     public void setServiceKey(String serviceKey) {
         this.serviceKey = serviceKey;
     }
+
+    
 
     public Channel connect(String ip, int port) throws Exception {
         /**
@@ -192,5 +195,92 @@ public class ProxyClient {
     public void syncAuth() throws InterruptedException {
         channelPromise.sync();
     }
+
+    public static org.slf4j.Logger getLog() {
+        return log;
+    }
+
+    public Bootstrap getClientBootstrap() {
+        return clientBootstrap;
+    }
+
+    public NioEventLoopGroup getClientGroup() {
+        return clientGroup;
+    }
+
+    public Channel getChannel() {
+        return channel;
+    }
+
+    public Channel getChannel1() {
+        return channel1;
+    }
+
+    public String getServiceKey() {
+        return serviceKey;
+    }
+
+    public boolean isConnectSuccess() {
+        return connectSuccess;
+    }
+
+    public boolean isAuthSuccess() {
+        return authSuccess;
+    }
+
+    public long getLastHeatbeatTime() {
+        return lastHeatbeatTime;
+    }
+
+    public ChannelPromise getChannelPromise() {
+        return channelPromise;
+    }
+
+    public ScheduledExecutorService getScheduledExecutorService() {
+        return scheduledExecutorService;
+    }
+
+    public void setClientBootstrap(Bootstrap clientBootstrap) {
+        this.clientBootstrap = clientBootstrap;
+    }
+
+    public void setClientGroup(NioEventLoopGroup clientGroup) {
+        this.clientGroup = clientGroup;
+    }
+
+    public void setChannel(Channel channel) {
+        this.channel = channel;
+    }
+
+
+    public void setConnectSuccess(boolean connectSuccess) {
+        this.connectSuccess = connectSuccess;
+    }
+
+    public void setAuthSuccess(boolean authSuccess) {
+        this.authSuccess = authSuccess;
+    }
+
+    public void setLastHeatbeatTime(long lastHeatbeatTime) {
+        this.lastHeatbeatTime = lastHeatbeatTime;
+    }
+
+    public void setChannelPromise(ChannelPromise channelPromise) {
+        this.channelPromise = channelPromise;
+    }
+
+    public void setScheduledExecutorService(ScheduledExecutorService scheduledExecutorService) {
+        this.scheduledExecutorService = scheduledExecutorService;
+    }
+
+    public String getRealAddress() {
+        return realAddress;
+    }
+
+    public void setRealAddress(String realAddress) {
+        this.realAddress = realAddress;
+    }
+
+    
 
 }

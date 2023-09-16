@@ -71,7 +71,7 @@ public class ProxyServerHandler extends SimpleChannelInboundHandler<Frame> {
             log.info("server offline");
             ProxyServer proxyServer = proxyServerMap.get(msg.getServiceKey());
             if (proxyServer != null) {
-                proxyServer.close();
+                proxyServer.closeChannel(msg);
             }
         }
     }

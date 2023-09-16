@@ -5,6 +5,7 @@ import com.github.wandererex.wormhole.serialize.NetworkUtil;
 import com.github.wandererex.wormhole.serialize.Task;
 import com.github.wandererex.wormhole.serialize.TaskExecutor;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
@@ -61,7 +62,15 @@ public class ForwardHandler extends SimpleChannelInboundHandler<ByteBuf> {
     public void send(Frame msg) {
         Channel channel = channelMap.get(msg.getRealClientAddress());
         if (channel != null) {
-            channel.writeAndFlush(msg.getPayload());
+            channel.writeAndFlush(Unpooled.copiedBuffer(msg.getPayload()));
+            log.info("send to client {} {}", msg.getRealClientAddress(), new String(msg.getPayload()));
+        }
+    }
+
+    public void closeChannel(Frame msg) {
+        Channel channel = channelMap.get(msg.getRealClientAddress());
+        if (channel != null) {
+            channel.close();
         }
     }
 }
