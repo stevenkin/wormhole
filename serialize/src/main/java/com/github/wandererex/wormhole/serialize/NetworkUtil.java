@@ -4,6 +4,9 @@ package com.github.wandererex.wormhole.serialize;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.UnpooledByteBufAllocator;
+
 import java.io.IOException;
 import java.net.*;
 import java.util.*;
@@ -286,13 +289,32 @@ public class NetworkUtil {
             if (i + 1024 < array.length) {
                 System.arraycopy(array, i, bytes, 0, 1024);
                 n = 1024;
-                Frame frame = new Frame(0x3, serviceKey, address, bytes);
+                Frame frame = new Frame(0x3, serviceKey, address, UnpooledByteBufAllocator.DEFAULT.buffer().writeBytes(bytes));
                 frames.add(frame);
             } else {
                 byte[] bytes1 = new byte[array.length - i];
                 System.arraycopy(array, i, bytes1, 0, bytes1.length);
                 n = bytes1.length;
-                Frame frame = new Frame(0x3, serviceKey, address, bytes1);
+                Frame frame = new Frame(0x3, serviceKey, address, UnpooledByteBufAllocator.DEFAULT.buffer().writeBytes(bytes1));
+                frames.add(frame);
+            }
+        }
+        return frames;
+    }
+
+    public static List<Frame> byteArraytoFrameList(ByteBuf byteBuf, String serviceKey, String address) {
+        int n = 0;
+        List<Frame> frames = new ArrayList<>();
+        for (int i = 0; i < byteBuf.readableBytes(); i += n) {
+            if (i + 1024 < byteBuf.readableBytes()) {
+                n = 1024;
+                ByteBuf slice = byteBuf.slice(i,1024);
+                Frame frame = new Frame(0x3, serviceKey, address, slice);
+                frames.add(frame);
+            } else {
+                n = byteBuf.readableBytes() - i;
+                ByteBuf slice = byteBuf.slice(i, n);
+                Frame frame = new Frame(0x3, serviceKey, address, slice);
                 frames.add(frame);
             }
         }

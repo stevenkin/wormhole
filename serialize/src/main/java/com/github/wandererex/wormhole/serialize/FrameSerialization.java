@@ -29,7 +29,7 @@ public class FrameSerialization implements Serialization<Frame> {
             byteBuf.writeInt(0);
         }
         if (msg.getPayload() != null) {
-            byteBuf.writeInt(msg.getPayload().length);
+            byteBuf.writeInt(msg.getPayload().readableBytes());
             byteBuf.writeBytes(msg.getPayload());
         } else {
             byteBuf.writeInt(0);
@@ -58,9 +58,8 @@ public class FrameSerialization implements Serialization<Frame> {
         }
         n = byteBuf.readInt();
         if (n > 0) {
-            bytes = new byte[n];
-            byteBuf.readBytes(bytes, 0, n);
-            frame.setPayload(bytes);
+            ByteBuf slice = byteBuf.slice(byteBuf.readerIndex(), n);
+            frame.setPayload(slice);
         }
         return frame;
     }

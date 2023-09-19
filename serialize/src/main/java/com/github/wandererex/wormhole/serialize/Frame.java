@@ -1,5 +1,6 @@
 package com.github.wandererex.wormhole.serialize;
 
+import io.netty.buffer.ByteBuf;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -18,5 +19,5 @@ public class Frame {
 
     private String realClientAddress;
 
-    private byte[] payload;
+    private ByteBuf payload;
 }

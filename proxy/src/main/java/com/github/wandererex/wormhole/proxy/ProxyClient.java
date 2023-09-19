@@ -67,12 +67,10 @@ public class ProxyClient {
                                 protected void channelRead0(ChannelHandlerContext ctx, ByteBuf msg) throws Exception {
                                     updateHeatbeatTime();
                                     if (channel1 != null) {
-                                        byte[] bytes = new byte[msg.readableBytes()];
-                                        msg.readBytes(bytes, 0, bytes.length);
-                                        List<Frame> frames = NetworkUtil.byteArraytoFrameList(bytes, serviceKey, realAddress);
-                                        log.info("proxy read from service data {}", bytes);
+                                        List<Frame> frames = NetworkUtil.byteArraytoFrameList(msg, serviceKey, realAddress);
+                                        log.info("proxy read from service data {}", msg);
                                         for (Frame frame : frames) {
-                                            TaskExecutor.get().addTask(new Task(channel1, frame));
+                                            channel1.writeAndFlush(frame);
                                         }
                                     }
                                 }

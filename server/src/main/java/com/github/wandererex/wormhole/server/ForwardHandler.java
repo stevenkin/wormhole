@@ -7,15 +7,18 @@ import com.github.wandererex.wormhole.serialize.TaskExecutor;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.util.Attribute;
 import io.netty.util.AttributeKey;
+import io.netty.util.ReferenceCountUtil;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +31,7 @@ public class ForwardHandler extends SimpleChannelInboundHandler<ByteBuf> {
     private Channel proxyChannel;
 
     private Map<String, Channel> channelMap = new HashMap<>();
+
 
     public ForwardHandler(String serviceKey, Channel proxyChannel) {
         this.serviceKey = serviceKey;
@@ -50,20 +54,38 @@ public class ForwardHandler extends SimpleChannelInboundHandler<ByteBuf> {
             }
             attr.set(null);
         }
-        byte[] bytes = new byte[msg.readableBytes()];
-        msg.readBytes(bytes, 0, bytes.length);
-        List<Frame> frames = NetworkUtil.byteArraytoFrameList(bytes, serviceKey, address);
-        for (Frame frame : frames) {
-            log.info("server mapping port read {}", frame);
-            TaskExecutor.get().addTask(new Task(proxyChannel, frame));
+        ByteBuf copy = null;
+        try {
+            copy = msg.copy();
+            List<Frame> frames = NetworkUtil.byteArraytoFrameList(copy, serviceKey, address);
+            List<ChannelFuture> channelFutures = new ArrayList<>();
+            for (Frame frame : frames) {
+                log.info("server mapping port read {}", frame);
+                ChannelFuture writeAndFlush = proxyChannel.writeAndFlush(msg);
+                channelFutures.add(writeAndFlush);
+            }
+            for (ChannelFuture future : channelFutures) {
+                future.sync();
+            }
+        } catch (Exception e) {
+
+        } finally {
+            if (copy != null) {
+                ReferenceCountUtil.release(copy);
+            }
         }
     }
 
     public void send(Frame msg) {
         Channel channel = channelMap.get(msg.getRealClientAddress());
         if (channel != null) {
-            channel.writeAndFlush(Unpooled.copiedBuffer(msg.getPayload()));
-            log.info("send to client {} {}", msg.getRealClientAddress(), new String(msg.getPayload()));
+            try {
+                channel.writeAndFlush(msg.getPayload()).sync();
+            } catch (InterruptedException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+            log.info("send to client {} {}", msg.getRealClientAddress(), msg.getPayload().toString());
         }
     }
 

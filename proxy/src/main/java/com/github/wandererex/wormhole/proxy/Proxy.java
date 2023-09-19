@@ -4,6 +4,9 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.github.wandererex.wormhole.serialize.Frame;
 import com.github.wandererex.wormhole.serialize.ProxyServiceConfig;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.Channel;
 import org.apache.commons.lang3.StringUtils;
 
@@ -47,7 +50,9 @@ public class Proxy {
         }
         String string = jsonObject.toJSONString();
         InetSocketAddress localAddress = (InetSocketAddress) channel.localAddress();
-        Frame frame = new Frame(0x1, null, localAddress.toString(), string.getBytes(StandardCharsets.UTF_8));
+        ByteBuf buffer = PooledByteBufAllocator.DEFAULT.buffer();
+        buffer.writeCharSequence(string, StandardCharsets.UTF_8);
+        Frame frame = new Frame(0x1, null, localAddress.toString(), buffer);
         channel.writeAndFlush(frame);
     }
 

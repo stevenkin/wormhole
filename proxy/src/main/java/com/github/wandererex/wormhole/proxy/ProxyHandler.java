@@ -33,7 +33,7 @@ public class ProxyHandler extends SimpleChannelInboundHandler<Frame> {
     protected void channelRead0(ChannelHandlerContext ctx, Frame msg) throws Exception {
         int opCode = msg.getOpCode();
         String serviceKey = msg.getServiceKey();
-        byte[] payload = msg.getPayload();
+        ByteBuf payload = msg.getPayload();
         proxyClient.updateHeatbeatTime();
         InetSocketAddress localAddress = (InetSocketAddress) ctx.channel().localAddress();
         String address = msg.getRealClientAddress();
@@ -59,7 +59,7 @@ public class ProxyHandler extends SimpleChannelInboundHandler<Frame> {
                 ctx.writeAndFlush(frame);
             } else {
                 log.info("proxy send to service data {}", payload);
-                TaskExecutor.get().addTask(new Task(channel, Unpooled.copiedBuffer(payload)));
+                channel.writeAndFlush(payload);
                 Frame frame = new Frame(0x41, serviceKey, localAddress.toString(), null);
                 ctx.writeAndFlush(frame);
             }

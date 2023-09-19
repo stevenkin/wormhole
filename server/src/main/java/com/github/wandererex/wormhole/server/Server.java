@@ -33,8 +33,7 @@ public class Server {
                         pipeline.addLast(new FrameEncoder());
                         pipeline.addLast(new PackageDecoder());
                         pipeline.addLast(new PackageEncoder());
-                        pipeline.addLast(new ProxyServerHandler() {
-                        });
+                        pipeline.addLast(new ProxyServerHandler());
                         pipeline.addLast(new LoggingHandler(LogLevel.DEBUG));
                     }
                 });

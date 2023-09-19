@@ -26,16 +26,18 @@ public class ProxyServerHandler extends SimpleChannelInboundHandler<Frame> {
         System.out.println("read: " + msg);
         InetSocketAddress localAddress = (InetSocketAddress) ctx.channel().localAddress();
         if (msg.getOpCode() == 0x1) {
-            byte[] payload = msg.getPayload();
-            String s = new String(payload, StandardCharsets.UTF_8);
+            String s = msg.getPayload().toString(StandardCharsets.UTF_8);
             JSONObject jsonObject = JSON.parseObject(s);
             ProxyServiceConfig proxyServiceConfig = new ProxyServiceConfig();
             for (Map.Entry<String, Object> entry : jsonObject.entrySet()) {
                 proxyServiceConfig.addConfig(entry.getKey(), JSON.parseObject((String) entry.getValue()).toJavaObject(ProxyServiceConfig.ServiceConfig.class));
             }
             buildForwardServer(proxyServiceConfig, ctx.channel());
-            msg.setOpCode(0x11);
-            ctx.writeAndFlush(msg);
+            Frame frame = new Frame();
+            frame.setOpCode(0x11);
+            frame.setRealClientAddress(localAddress.toString());
+            frame.setServiceKey(msg.getServiceKey());
+            ctx.writeAndFlush(frame);
             System.out.println("write: " + msg);
         }
         if (msg.getOpCode() == 0x5) {
@@ -74,6 +76,7 @@ public class ProxyServerHandler extends SimpleChannelInboundHandler<Frame> {
                 proxyServer.closeChannel(msg);
             }
         }
+        ctx.fireChannelRead(msg);
     }
 
     private void buildForwardServer(ProxyServiceConfig config, Channel channel) {
