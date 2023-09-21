@@ -56,28 +56,11 @@ public class ForwardHandler extends SimpleChannelInboundHandler<ByteBuf> {
             }
             attr.set(null);
         }
-        ByteBuf copy = null;
-        try {
-            copy = msg.copy();
-            List<Frame> frames = NetworkUtil.byteArraytoFrameList(copy, serviceKey, address);
-            List<ChannelFuture> channelFutures = new ArrayList<>();
-            for (Frame frame : frames) {
-                log.info("server mapping port read {}", frame);
-                ChannelFuture writeAndFlush = proxyChannel.writeAndFlush(frame);
-                channelFutures.add(writeAndFlush);
-            }
-            
-            for (ChannelFuture future : channelFutures) {
-                future.sync();
-            }
-            log.info("收到请求,转发给代理{}", System.currentTimeMillis());
-        } catch (Exception e) {
-
-        } finally {
-            if (copy != null) {
-                ReferenceCountUtil.release(copy);
-            }
-        }
+        Frame frame2 = new Frame();
+        frame2.setOpCode(3);
+        frame2.setServiceKey(serviceKey);
+        frame2.setRealClientAddress(address);
+        proxyChannel.writeAndFlush(frame2);
     }
 
     public void send(Frame msg) {

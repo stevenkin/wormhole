@@ -8,6 +8,9 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
+import io.netty.handler.timeout.IdleStateHandler;
+import io.netty.handler.timeout.ReadTimeoutHandler;
+
 import org.apache.commons.lang3.StringUtils;
 
 public class Server {
@@ -29,6 +32,7 @@ public class Server {
                 .childHandler(new ChannelInitializer<NioSocketChannel>() {
                     protected void initChannel(NioSocketChannel ch) throws Exception {
                         ChannelPipeline pipeline = ch.pipeline();
+                        pipeline.addLast(new ReadTimeoutHandler(5));
                         pipeline.addLast(new FrameDecoder());
                         pipeline.addLast(new FrameEncoder());
                         pipeline.addLast(new PackageDecoder());

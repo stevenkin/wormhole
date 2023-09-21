@@ -1,4 +1,4 @@
-package com.github.wandererex.wormhole.serialize;
+package com.github.wandererex.wormhole.server;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;

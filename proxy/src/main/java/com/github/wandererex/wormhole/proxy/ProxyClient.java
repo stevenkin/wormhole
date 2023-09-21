@@ -189,16 +189,6 @@ public class ProxyClient {
 
     public void checkIdle() {
         clientGroup.schedule(() -> {
-            if (lastHeatbeatTime > 0) {
-                if (System.currentTimeMillis() - lastHeatbeatTime > 15000) {
-                    try {
-                        reconnect();
-                    } catch (Exception e) {
-                    }
-                }
-            }
-        }, 5, TimeUnit.SECONDS);
-        clientGroup.schedule(() -> {
             InetSocketAddress remoteAddress = (InetSocketAddress) channel.remoteAddress();
             Frame frame = new Frame(0x5, null, remoteAddress.toString(), null);
             channel.writeAndFlush(frame);
