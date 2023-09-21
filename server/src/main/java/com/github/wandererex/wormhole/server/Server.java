@@ -34,7 +34,13 @@ public class Server {
                         pipeline.addLast(new PackageDecoder());
                         pipeline.addLast(new PackageEncoder());
                         pipeline.addLast(new ProxyServerHandler());
-                        pipeline.addLast(new LoggingHandler(LogLevel.DEBUG));
+                        pipeline.addLast(new ChannelInboundHandlerAdapter() {
+                            @Override
+                            public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+                                cause.printStackTrace();
+                                super.exceptionCaught(ctx, cause);
+                            }
+                        });
                     }
                 });
 

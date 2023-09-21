@@ -61,7 +61,7 @@ public class ForwardHandler extends SimpleChannelInboundHandler<ByteBuf> {
             List<ChannelFuture> channelFutures = new ArrayList<>();
             for (Frame frame : frames) {
                 log.info("server mapping port read {}", frame);
-                ChannelFuture writeAndFlush = proxyChannel.writeAndFlush(msg);
+                ChannelFuture writeAndFlush = proxyChannel.writeAndFlush(frame);
                 channelFutures.add(writeAndFlush);
             }
             for (ChannelFuture future : channelFutures) {
@@ -78,7 +78,7 @@ public class ForwardHandler extends SimpleChannelInboundHandler<ByteBuf> {
 
     public void send(Frame msg) {
         Channel channel = channelMap.get(msg.getRealClientAddress());
-        if (channel != null) {
+        if (channel != null && channel.isActive()) {
             try {
                 channel.writeAndFlush(msg.getPayload()).sync();
             } catch (InterruptedException e) {
@@ -91,7 +91,7 @@ public class ForwardHandler extends SimpleChannelInboundHandler<ByteBuf> {
 
     public void closeChannel(Frame msg) {
         Channel channel = channelMap.get(msg.getRealClientAddress());
-        if (channel != null) {
+        if (channel != null && channel.isActive()) {
             channel.close();
         }
     }

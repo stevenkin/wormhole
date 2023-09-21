@@ -76,7 +76,6 @@ public class ProxyServerHandler extends SimpleChannelInboundHandler<Frame> {
                 proxyServer.closeChannel(msg);
             }
         }
-        ctx.fireChannelRead(msg);
     }
 
     private void buildForwardServer(ProxyServiceConfig config, Channel channel) {

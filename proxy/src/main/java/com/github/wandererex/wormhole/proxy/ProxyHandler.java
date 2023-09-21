@@ -31,6 +31,7 @@ public class ProxyHandler extends SimpleChannelInboundHandler<Frame> {
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, Frame msg) throws Exception {
+        proxyClient.updateHeatbeatTime();
         int opCode = msg.getOpCode();
         String serviceKey = msg.getServiceKey();
         ByteBuf payload = msg.getPayload();
@@ -82,9 +83,9 @@ public class ProxyHandler extends SimpleChannelInboundHandler<Frame> {
             proxyClient.send(frame);
             close();
         } else if (opCode == 0xA) {
-            log.info("server offline");
+            log.info("server offline123");
             Channel channel = map.get(address);
-            if (channel != null) {
+            if (channel != null && channel.isActive()) {
                 channel.close();
             }
         }

@@ -10,11 +10,15 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.bytes.ByteArrayEncoder;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
+import io.netty.util.Attribute;
+import io.netty.util.AttributeKey;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -41,7 +45,9 @@ public class ProxyClient {
 
     private ChannelPromise channelPromise;
 
-    private ScheduledExecutorService scheduledExecutorService;
+    private String ip;
+
+    private Integer port;
 
     public ProxyClient(ProxyServiceConfig config) {
         this.clientBootstrap = new Bootstrap();
@@ -54,9 +60,8 @@ public class ProxyClient {
                         //初始化时将handler设置到ChannelPipeline
                         @Override
                         public void initChannel(SocketChannel ch) {
-                            //ch.pipeline().addLast("idleStateHandler", new IdleStateHandler(10 * 3, 15 * 3, 20 * 3));
-                            //ch.pipeline().addLast(new FixedLengthFrameDecoder(20));
                             ch.pipeline().addLast(new SimpleChannelInboundHandler<ByteBuf>() {
+
                                 @Override
                                 public void channelInactive(ChannelHandlerContext ctx) throws Exception {
                                     Frame frame = new Frame(0xB, serviceKey, realAddress, null);
@@ -65,17 +70,21 @@ public class ProxyClient {
                                 }
                                 @Override
                                 protected void channelRead0(ChannelHandlerContext ctx, ByteBuf msg) throws Exception {
-                                    updateHeatbeatTime();
                                     if (channel1 != null) {
                                         List<Frame> frames = NetworkUtil.byteArraytoFrameList(msg, serviceKey, realAddress);
                                         log.info("proxy read from service data {}", msg);
+                                        List<ChannelFuture> channelFutures = new ArrayList<>();
                                         for (Frame frame : frames) {
-                                            channel1.writeAndFlush(frame);
+                                            log.info("server mapping port read {}", frame);
+                                            ChannelFuture writeAndFlush = channel1.writeAndFlush(frame);
+                                            channelFutures.add(writeAndFlush);
+                                        }
+                                        for (ChannelFuture future : channelFutures) {
+                                            future.sync();
                                         }
                                     }
                                 }
                             });
-                            ch.pipeline().addLast("logs", new LoggingHandler(LogLevel.ERROR));
                         }
                     });
         }
@@ -93,7 +102,6 @@ public class ProxyClient {
                             ch.pipeline().addLast(new PackageDecoder());
                             ch.pipeline().addLast(new PackageEncoder());
                             ch.pipeline().addLast(new ProxyHandler(ProxyClient.this, config));
-                            ch.pipeline().addLast("logs", new LoggingHandler(LogLevel.DEBUG));
                         }
                     });
         }
@@ -120,6 +128,8 @@ public class ProxyClient {
         this.channel = doConnect(ip, port, 5);
         this.channelPromise = new DefaultChannelPromise(this.channel);
         this.connectSuccess = true;
+        this.ip = ip;
+        this.port = port;
         return this.channel;
     }
 
@@ -148,6 +158,11 @@ public class ProxyClient {
         connectSuccess = false;
     }
 
+    public void reconnect() throws Exception {
+        disconnect();
+        connect(ip, port);
+    }
+
     public void send(Frame frame) throws Exception {
         if (!connectSuccess) {
             throw new RuntimeException("no connect!");
@@ -163,7 +178,6 @@ public class ProxyClient {
     public void shutdown() throws Exception {
         disconnect();
         clientGroup.shutdownGracefully().syncUninterruptibly();
-        scheduledExecutorService.shutdown();
         Proxy.latch.countDown();
     }
 
@@ -172,22 +186,21 @@ public class ProxyClient {
     }
 
     public void checkIdle() {
-        scheduledExecutorService = new ScheduledThreadPoolExecutor(2);
-        scheduledExecutorService.scheduleWithFixedDelay(() -> {
+        clientGroup.schedule(() -> {
             if (lastHeatbeatTime > 0) {
                 if (System.currentTimeMillis() - lastHeatbeatTime > 15000) {
                     try {
-                        shutdown();
+                        reconnect();
                     } catch (Exception e) {
                     }
                 }
             }
-        }, 5, 5, TimeUnit.SECONDS);
-        scheduledExecutorService.scheduleWithFixedDelay(() -> {
+        }, 5, TimeUnit.SECONDS);
+        clientGroup.schedule(() -> {
             InetSocketAddress remoteAddress = (InetSocketAddress) channel.remoteAddress();
             Frame frame = new Frame(0x5, null, remoteAddress.toString(), null);
             channel.writeAndFlush(frame);
-        }, 5, 5, TimeUnit.SECONDS);
+        }, 5, TimeUnit.SECONDS);
     }
 
     public void syncAuth() throws InterruptedException {
@@ -234,10 +247,6 @@ public class ProxyClient {
         return channelPromise;
     }
 
-    public ScheduledExecutorService getScheduledExecutorService() {
-        return scheduledExecutorService;
-    }
-
     public void setClientBootstrap(Bootstrap clientBootstrap) {
         this.clientBootstrap = clientBootstrap;
     }
@@ -265,10 +274,6 @@ public class ProxyClient {
 
     public void setChannelPromise(ChannelPromise channelPromise) {
         this.channelPromise = channelPromise;
-    }
-
-    public void setScheduledExecutorService(ScheduledExecutorService scheduledExecutorService) {
-        this.scheduledExecutorService = scheduledExecutorService;
     }
 
     public String getRealAddress() {
