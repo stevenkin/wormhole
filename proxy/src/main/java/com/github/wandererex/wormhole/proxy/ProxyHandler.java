@@ -54,6 +54,7 @@ public class ProxyHandler extends SimpleChannelInboundHandler<Frame> {
                 ctx.writeAndFlush(frame);
             }
         } else if (opCode == 0x3) {
+            log.info("收到服务器转发的请求{}", System.currentTimeMillis());
             Channel channel = map.get(address);
             if (channel == null) {
                 Frame frame = new Frame(0x40, serviceKey, localAddress.toString(), null);
@@ -63,6 +64,7 @@ public class ProxyHandler extends SimpleChannelInboundHandler<Frame> {
                 channel.writeAndFlush(payload);
                 Frame frame = new Frame(0x41, serviceKey, localAddress.toString(), null);
                 ctx.writeAndFlush(frame);
+                log.info("请求发给内网服务{}", System.currentTimeMillis());
             }
         } else if (opCode == 0x10) {
             log.error("proxy connect server error");

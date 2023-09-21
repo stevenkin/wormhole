@@ -5,6 +5,7 @@ import com.github.wandererex.wormhole.serialize.NetworkUtil;
 import com.github.wandererex.wormhole.serialize.Task;
 import com.github.wandererex.wormhole.serialize.TaskExecutor;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufUtil;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -44,6 +45,7 @@ public class ForwardHandler extends SimpleChannelInboundHandler<ByteBuf> {
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, ByteBuf msg) throws Exception {
+        log.info("收到请求{}", System.currentTimeMillis());
         String address = ((InetSocketAddress)(ctx.channel().remoteAddress())).toString();
         AttributeKey<CountDownLatch> attributeKey = AttributeKey.valueOf(serviceKey);
         Attribute<CountDownLatch> attr = proxyChannel.attr(attributeKey);
@@ -64,9 +66,11 @@ public class ForwardHandler extends SimpleChannelInboundHandler<ByteBuf> {
                 ChannelFuture writeAndFlush = proxyChannel.writeAndFlush(frame);
                 channelFutures.add(writeAndFlush);
             }
+            
             for (ChannelFuture future : channelFutures) {
                 future.sync();
             }
+            log.info("收到请求,转发给代理{}", System.currentTimeMillis());
         } catch (Exception e) {
 
         } finally {
@@ -85,8 +89,9 @@ public class ForwardHandler extends SimpleChannelInboundHandler<ByteBuf> {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
             }
-            log.info("send to client {} {}", msg.getRealClientAddress(), msg.getPayload().toString());
+            log.info("send to client {} {}", msg.getRealClientAddress(), msg.getPayload());
         }
+        log.info("响应发给客户端{}", System.currentTimeMillis());
     }
 
     public void closeChannel(Frame msg) {

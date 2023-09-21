@@ -70,6 +70,7 @@ public class ProxyClient {
                                 }
                                 @Override
                                 protected void channelRead0(ChannelHandlerContext ctx, ByteBuf msg) throws Exception {
+                                    log.info("收到内网服务响应{}", System.currentTimeMillis());
                                     if (channel1 != null) {
                                         List<Frame> frames = NetworkUtil.byteArraytoFrameList(msg, serviceKey, realAddress);
                                         log.info("proxy read from service data {}", msg);
@@ -83,6 +84,7 @@ public class ProxyClient {
                                             future.sync();
                                         }
                                     }
+                                    log.info("响应发给服务器{}", System.currentTimeMillis());
                                 }
                             });
                         }
