@@ -66,9 +66,10 @@ public class ProxyServer {
                             @Override
                             public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
                                 String address = ((InetSocketAddress)(ctx.channel().remoteAddress())).toString();
+                                forwardHandler.setSemaphore(address);
+                                forwardHandler.setChannel(address, ctx.channel());
                                 Frame frame = new Frame(0x9, serviceKey, address, null);
                                 proxyChannel.writeAndFlush(frame);
-                                forwardHandler.setSemaphore(address);
                             }
 
                             @Override
