@@ -202,14 +202,12 @@ public class ProxyClient {
             if (lastHeatbeatTime > 0) {
                 if (System.currentTimeMillis() - lastHeatbeatTime > 15000) {
                     log.info("reconnect");
-                    try {
-                        reconnect();
-                    } catch (Exception e) {
-                        log.info("reconnect error {}", e);
+                    for (;;) {
                         try {
-                            shutdown();
-                        } catch (Exception e1) {
-                            e1.printStackTrace();
+                            reconnect();
+                            break;
+                        } catch (Exception e) {
+                            log.info("reconnect error {}", e);
                         }
                     }
                 }
