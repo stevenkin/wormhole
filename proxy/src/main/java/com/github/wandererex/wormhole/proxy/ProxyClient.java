@@ -192,12 +192,29 @@ public class ProxyClient {
     }
 
     public void checkIdle() {
-        scheduledExecutorService = new ScheduledThreadPoolExecutor(1);
+        scheduledExecutorService = new ScheduledThreadPoolExecutor(2);
         scheduledExecutorService.scheduleWithFixedDelay(() -> {
             InetSocketAddress remoteAddress = (InetSocketAddress) channel.remoteAddress();
             Frame frame = new Frame(0x5, null, remoteAddress.toString(), null);
             channel.writeAndFlush(frame);
         }, 0, 5, TimeUnit.SECONDS);
+        scheduledExecutorService.scheduleWithFixedDelay(() -> {
+            if (lastHeatbeatTime > 0) {
+                if (System.currentTimeMillis() - lastHeatbeatTime > 15000) {
+                    log.info("reconnect");
+                    try {
+                        reconnect();
+                    } catch (Exception e) {
+                        log.info("reconnect error {}", e);
+                        try {
+                            shutdown();
+                        } catch (Exception e1) {
+                            e1.printStackTrace();
+                        }
+                    }
+                }
+            }
+        }, 15, 15, TimeUnit.SECONDS);
     }
 
     public void syncAuth() throws InterruptedException {
