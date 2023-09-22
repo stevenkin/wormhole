@@ -47,7 +47,7 @@ public class ProxyHandler extends SimpleChannelInboundHandler<Frame> {
             try {
                 Channel channel = proxyClient.connect(serviceConfig.getIp(), serviceConfig.getPort());
                 map.put(address, channel);
-                Frame frame = new Frame(0x91, serviceKey, localAddress.toString(), null);
+                Frame frame = new Frame(0x91, serviceKey, address, null);
                 ctx.writeAndFlush(frame);
             } catch (Exception e) {
                 Frame frame = new Frame(0x90, serviceKey,  localAddress.toString(), null);

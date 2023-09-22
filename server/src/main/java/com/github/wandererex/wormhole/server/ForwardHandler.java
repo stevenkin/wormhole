@@ -11,6 +11,7 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelPromise;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.util.Attribute;
@@ -24,6 +25,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Semaphore;
 
 @ChannelHandler.Sharable
 @Slf4j
@@ -32,6 +34,8 @@ public class ForwardHandler extends SimpleChannelInboundHandler<ByteBuf> {
     private Channel proxyChannel;
 
     private Map<String, Channel> channelMap = new HashMap<>();
+
+     private Map<String, Semaphore> semaphoreMap = new HashMap<>();
 
 
     public ForwardHandler(String serviceKey, Channel proxyChannel) {
@@ -43,24 +47,43 @@ public class ForwardHandler extends SimpleChannelInboundHandler<ByteBuf> {
         channelMap.put(client, channel);
     }
 
+    public void setSemaphore(String client) {
+        Semaphore semaphore = new Semaphore(1);
+        try {
+            semaphore.acquire();
+        } catch (InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        semaphoreMap.put(client, semaphore);
+    }
+
+    public Semaphore getSemaphore(String client) {
+        return semaphoreMap.get(client);
+    }
+
+    
+
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, ByteBuf msg) throws Exception {
         log.info("收到请求{}", System.currentTimeMillis());
         String address = ((InetSocketAddress)(ctx.channel().remoteAddress())).toString();
-        AttributeKey<CountDownLatch> attributeKey = AttributeKey.valueOf(serviceKey);
-        Attribute<CountDownLatch> attr = proxyChannel.attr(attributeKey);
-        if (attr.get() != null) {
-            CountDownLatch latch = attr.get();
-            if (latch != null) {
-                latch.await();
-            }
-            attr.set(null);
+        Semaphore semaphore = semaphoreMap.get(address);
+        if (semaphore == null) {
+            ctx.fireChannelRead(msg);
+            return;
         }
-        Frame frame2 = new Frame();
-        frame2.setOpCode(3);
-        frame2.setServiceKey(serviceKey);
-        frame2.setRealClientAddress(address);
-        proxyChannel.writeAndFlush(frame2);
+        semaphore.acquire();
+        semaphore.release();
+        ByteBuf copy = msg.copy();
+        List<Frame> frames = NetworkUtil.byteArraytoFrameList(copy, serviceKey, address);
+        for (Frame frame : frames) {
+            log.info("server mapping port read {}", frame);
+            proxyChannel.writeAndFlush(frame);
+        }
+        proxyChannel.eventLoop().execute(() -> {
+            ReferenceCountUtil.release(copy);
+        });
     }
 
     public void send(Frame msg) {
@@ -82,5 +105,25 @@ public class ForwardHandler extends SimpleChannelInboundHandler<ByteBuf> {
         if (channel != null && channel.isActive()) {
             channel.close();
         }
+    }
+
+    public static org.slf4j.Logger getLog() {
+        return log;
+    }
+
+    public String getServiceKey() {
+        return serviceKey;
+    }
+
+    public Channel getProxyChannel() {
+        return proxyChannel;
+    }
+
+    public Map<String, Channel> getChannelMap() {
+        return channelMap;
+    }
+
+    public ChannelPromise getPromise() {
+        return promise;
     }
 }

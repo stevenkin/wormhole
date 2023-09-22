@@ -19,6 +19,7 @@ import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -48,6 +49,8 @@ public class ProxyClient {
     private String ip;
 
     private Integer port;
+
+    private ScheduledExecutorService scheduledExecutorService;
 
     public ProxyClient(ProxyServiceConfig config) {
         this.clientBootstrap = new Bootstrap();
@@ -179,6 +182,7 @@ public class ProxyClient {
 
     public void shutdown() throws Exception {
         disconnect();
+        scheduledExecutorService.shutdown();
         clientGroup.shutdownGracefully().syncUninterruptibly();
         Proxy.latch.countDown();
     }
@@ -188,11 +192,12 @@ public class ProxyClient {
     }
 
     public void checkIdle() {
-        clientGroup.schedule(() -> {
+        scheduledExecutorService = new ScheduledThreadPoolExecutor(1);
+        scheduledExecutorService.scheduleWithFixedDelay(() -> {
             InetSocketAddress remoteAddress = (InetSocketAddress) channel.remoteAddress();
             Frame frame = new Frame(0x5, null, remoteAddress.toString(), null);
             channel.writeAndFlush(frame);
-        }, 5, TimeUnit.SECONDS);
+        }, 0, 5, TimeUnit.SECONDS);
     }
 
     public void syncAuth() throws InterruptedException {

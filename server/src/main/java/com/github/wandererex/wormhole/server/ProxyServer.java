@@ -67,13 +67,8 @@ public class ProxyServer {
                             public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
                                 String address = ((InetSocketAddress)(ctx.channel().remoteAddress())).toString();
                                 Frame frame = new Frame(0x9, serviceKey, address, null);
-                                CountDownLatch latch = new CountDownLatch(1);
-                                channel = ctx.channel();
-                                forwardHandler.setChannel(address, channel);
-                                AttributeKey<CountDownLatch> attributeKey = AttributeKey.valueOf(serviceKey);
-                                Attribute<CountDownLatch> attr = proxyChannel.attr(attributeKey);
-                                attr.set(latch);
                                 proxyChannel.writeAndFlush(frame);
+                                forwardHandler.setSemaphore(address);
                             }
 
                             @Override
@@ -117,4 +112,10 @@ public class ProxyServer {
     public void closeChannel(Frame msg) {
         forwardHandler.closeChannel(msg);
     }
+
+    public ForwardHandler getForwardHandler() {
+        return forwardHandler;
+    }
+
+    
 }

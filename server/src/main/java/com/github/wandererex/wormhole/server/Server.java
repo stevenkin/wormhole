@@ -32,7 +32,6 @@ public class Server {
                 .childHandler(new ChannelInitializer<NioSocketChannel>() {
                     protected void initChannel(NioSocketChannel ch) throws Exception {
                         ChannelPipeline pipeline = ch.pipeline();
-                        pipeline.addLast(new ReadTimeoutHandler(5));
                         pipeline.addLast(new FrameDecoder());
                         pipeline.addLast(new FrameEncoder());
                         pipeline.addLast(new PackageDecoder());

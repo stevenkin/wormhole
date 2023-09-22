@@ -42,7 +42,7 @@ public class ProxyServer {
                                     System.out.println("write: " + msg);
                                 }
                                 if (msg.getOpCode() == 0x5) {
-                                    Frame frame = new Frame(0x6, null, null);
+                                    Frame frame = new Frame(0x6, null, null, null);
                                     ctx.writeAndFlush(frame);
                                     System.out.println("write: " + frame);
                                 }

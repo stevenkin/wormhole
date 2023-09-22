@@ -17,6 +17,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Semaphore;
 
 @Slf4j
 public class ProxyServerHandler extends SimpleChannelInboundHandler<Frame> {
@@ -46,11 +47,12 @@ public class ProxyServerHandler extends SimpleChannelInboundHandler<Frame> {
             System.out.println("write: " + frame);
         }
         if (msg.getOpCode() == 0x91) {
-            AttributeKey<CountDownLatch> attributeKey = AttributeKey.valueOf(msg.getServiceKey());
-            Attribute<CountDownLatch> attr = ctx.attr(attributeKey);
-            CountDownLatch latch = attr.get();
-            if (latch != null) {
-                latch.countDown();
+            ProxyServer proxyServer = proxyServerMap.get(msg.getServiceKey());
+            if (proxyServer != null) {
+                Semaphore semaphore = proxyServer.getForwardHandler().getSemaphore(msg.getRealClientAddress());
+                if (semaphore != null) {
+                    semaphore.release();
+                }
             }
         }
         if (msg.getOpCode() == 0x3) {
@@ -74,6 +76,10 @@ public class ProxyServerHandler extends SimpleChannelInboundHandler<Frame> {
             log.info("server offline");
             ProxyServer proxyServer = proxyServerMap.get(msg.getServiceKey());
             if (proxyServer != null) {
+                Semaphore semaphore = proxyServer.getForwardHandler().getSemaphore(msg.getRealClientAddress());
+                if (semaphore != null) {
+                    semaphore.acquire();
+                }
                 proxyServer.closeChannel(msg);
             }
         }
