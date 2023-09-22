@@ -22,12 +22,7 @@ public class PackageDecoder extends MessageToMessageDecoder<ByteBuf> {
 
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf byteBuf, List<Object> out) throws Exception {
-        ByteBuf copy = byteBuf.copy();
-        AttributeKey<ByteBuf> attributeKey = AttributeKey.valueOf("buffer");
-        Attribute<ByteBuf> attr = ctx.channel().attr(attributeKey);
-        attr.set(copy);
-        Frame pkg = serialization.deserialize(copy);
+        Frame pkg = serialization.deserialize(byteBuf);
         out.add(pkg);
-        ctx.pipeline().addLast(releaseHandler);
     }
 }

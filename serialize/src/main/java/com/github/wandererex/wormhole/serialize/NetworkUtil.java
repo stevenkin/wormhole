@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.buffer.UnpooledByteBufAllocator;
 
 import java.io.IOException;
@@ -308,13 +309,15 @@ public class NetworkUtil {
         for (int i = 0; i < byteBuf.readableBytes(); i += n) {
             if (i + 1024 < byteBuf.readableBytes()) {
                 n = 1024;
-                ByteBuf slice = byteBuf.slice(i,1024);
-                Frame frame = new Frame(0x3, serviceKey, address, slice);
+                ByteBuf buffer = PooledByteBufAllocator.DEFAULT.buffer(n);
+                buffer.writeBytes(byteBuf, i, n);
+                Frame frame = new Frame(0x3, serviceKey, address, buffer);
                 frames.add(frame);
             } else {
                 n = byteBuf.readableBytes() - i;
-                ByteBuf slice = byteBuf.slice(i, n);
-                Frame frame = new Frame(0x3, serviceKey, address, slice);
+                ByteBuf buffer = PooledByteBufAllocator.DEFAULT.buffer(n);
+                buffer.writeBytes(byteBuf, i, n);
+                Frame frame = new Frame(0x3, serviceKey, address, buffer);
                 frames.add(frame);
             }
         }

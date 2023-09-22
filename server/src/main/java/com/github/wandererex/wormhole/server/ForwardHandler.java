@@ -89,12 +89,7 @@ public class ForwardHandler extends SimpleChannelInboundHandler<ByteBuf> {
     public void send(Frame msg) {
         Channel channel = channelMap.get(msg.getRealClientAddress());
         if (channel != null && channel.isActive()) {
-            try {
-                channel.writeAndFlush(msg.getPayload()).sync();
-            } catch (InterruptedException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
+            channel.writeAndFlush(msg.getPayload());
             log.info("send to client {} {}", msg.getRealClientAddress(), msg.getPayload());
         }
         log.info("响应发给客户端{}", System.currentTimeMillis());

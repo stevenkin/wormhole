@@ -58,8 +58,9 @@ public class FrameSerialization implements Serialization<Frame> {
         }
         n = byteBuf.readInt();
         if (n > 0) {
-            ByteBuf slice = byteBuf.slice(byteBuf.readerIndex(), n);
-            frame.setPayload(slice);
+            ByteBuf buffer = PooledByteBufAllocator.DEFAULT.buffer(n);
+            buffer.writeBytes(byteBuf, n);
+            frame.setPayload(buffer);
         }
         return frame;
     }
