@@ -37,6 +37,8 @@ public class ForwardHandler extends SimpleChannelInboundHandler<ByteBuf> {
 
      private Map<String, Semaphore> semaphoreMap = new HashMap<>();
 
+     private DataClientPool dataClientPool = new DataClientPool();
+
 
     public ForwardHandler(String serviceKey, Channel proxyChannel) {
         this.serviceKey = serviceKey;
@@ -75,15 +77,7 @@ public class ForwardHandler extends SimpleChannelInboundHandler<ByteBuf> {
         }
         semaphore.acquire();
         semaphore.release();
-        ByteBuf copy = msg.copy();
-        List<Frame> frames = NetworkUtil.byteArraytoFrameList(copy, serviceKey, address);
-        for (Frame frame : frames) {
-            log.info("server mapping port read {}", frame);
-            proxyChannel.writeAndFlush(frame);
-        }
-        proxyChannel.eventLoop().execute(() -> {
-            ReferenceCountUtil.release(copy);
-        });
+        
     }
 
     public void send(Frame msg) {
@@ -116,9 +110,5 @@ public class ForwardHandler extends SimpleChannelInboundHandler<ByteBuf> {
 
     public Map<String, Channel> getChannelMap() {
         return channelMap;
-    }
-
-    public ChannelPromise getPromise() {
-        return promise;
     }
 }

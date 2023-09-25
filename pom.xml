@@ -13,7 +13,6 @@
         <module>server</module>
         <module>serialize</module>
         <module>proxy</module>
-        <module>session</module>
     </modules>
     <properties>
         <lombok.version>1.18.12</lombok.version>

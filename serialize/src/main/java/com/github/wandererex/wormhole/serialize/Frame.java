@@ -13,6 +13,7 @@ public class Frame {
     //0x9:内网proxy与内网服务建立连接, 0xA:0x9响应(0失败，1成功)
     //0xA:内网proxy与内网服务断开连接, 0xA:0xA响应(0失败，1成功)
     //0xB:公网服务器断开连接, 0xA:0xB响应(0失败，1成功)
+    //0xD:建立数据传输通道控制指令, 0xD:0xD响应(0失败，1成功)
     private int opCode;
 
     private String serviceKey;
