@@ -1,11 +1,6 @@
 package com.github.wandererex.wormhole.proxy;
 
 import com.github.wandererex.wormhole.serialize.*;
-import com.github.wandererex.wormhole.server.FrameDecoder;
-import com.github.wandererex.wormhole.server.FrameEncoder;
-import com.github.wandererex.wormhole.server.PackageDecoder;
-import com.github.wandererex.wormhole.server.PackageEncoder;
-
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.*;

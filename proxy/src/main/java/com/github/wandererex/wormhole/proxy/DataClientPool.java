@@ -4,24 +4,24 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import io.netty.channel.Channel;
+
 public class DataClientPool {
     private int index = 0;
     
     private List<DataClient> list = new ArrayList<>();
 
+    private String ip;
+
     private Integer dataPort;
 
     
 
-    public DataClientPool(Integer dataPort) {
+    public DataClientPool(String ip, Integer dataPort) {
         this.dataPort = dataPort;
     }
 
-    public synchronized void addClient(DataClient client) {
-        list.add(client);
-    }
-
-    public synchronized DataClient getClient() {
+    public synchronized DataClient getClient() throws Exception {
         int i = index;
         boolean f = false;
         DataClient dataClient = null;
@@ -41,7 +41,9 @@ public class DataClientPool {
             }
         }
         dataClient = new DataClient();
-        dataClient.connect(dataPort, i)
+        dataClient.connect(ip, dataPort);
+        dataClient.take();
+        list.add(dataClient);
         return dataClient;
     }
 }
