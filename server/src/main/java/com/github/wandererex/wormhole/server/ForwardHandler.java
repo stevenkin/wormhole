@@ -82,10 +82,6 @@ public class ForwardHandler extends SimpleChannelInboundHandler<ByteBuf> {
         }
         semaphore.acquire();
         semaphore.release();
-        
-        if (dataClient == null) {
-            dataClient = dataClientPool.getClient();
-        }
 
 
 

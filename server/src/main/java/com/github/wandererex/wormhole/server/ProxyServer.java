@@ -47,7 +47,7 @@ public class ProxyServer {
         this.mappingPort = mappingPort;
         this.proxyChannel = proxyChannel;
         this.dataPort = dataPort;
-        this.forwardHandler = new ForwardHandler(serviceKey, proxyChannel, dataPort);
+        this.forwardHandler = new ForwardHandler(serviceKey, proxyChannel);
     }
 
     public void send(Frame msg) {
