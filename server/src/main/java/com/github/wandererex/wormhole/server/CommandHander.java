@@ -12,21 +12,23 @@ import io.netty.channel.ChannelHandler.Sharable;
 
 @Sharable
 public class CommandHander extends SimpleChannelInboundHandler<Frame>{
-    private AtomicInteger seq = new AtomicInteger();
+    private DataForwardHander dataForwardHander;
+
+    public CommandHander(DataForwardHander dataForwardHander) {
+        this.dataForwardHander = dataForwardHander;
+    }
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, Frame msg) throws Exception {
         if (msg.getOpCode() == 0xD) {
             String realClientAddress = msg.getRealClientAddress();
             String serviceKey = msg.getServiceKey();
+            dataForwardHander.setChannel(realClientAddress, ctx.channel());
+
             Frame frame = new Frame();
             frame.setOpCode(0xD1);
             frame.setRealClientAddress(realClientAddress);
             frame.setServiceKey(serviceKey);
-            int andIncrement = seq.getAndIncrement();
-            ByteBuf buffer = PooledByteBufAllocator.DEFAULT.buffer(4);
-            buffer.writeInt(andIncrement);
-            frame.setPayload(buffer);
             ctx.writeAndFlush(frame).addListener(f -> {
                 if (f.isSuccess()) {
                     ctx.pipeline().remove(FrameDecoder.class);

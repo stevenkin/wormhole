@@ -8,13 +8,19 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelPromise;
 import io.netty.channel.SimpleChannelInboundHandler;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.InetSocketAddress;
+import java.nio.charset.Charset;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+
+import org.apache.commons.lang3.RandomStringUtils;
 
 @Slf4j
 public class ProxyHandler extends SimpleChannelInboundHandler<Frame> {
@@ -22,11 +28,16 @@ public class ProxyHandler extends SimpleChannelInboundHandler<Frame> {
 
     private ConcurrentMap<String, Channel> map = new ConcurrentHashMap<>();
 
+    private Map<String, DataClient> dataChannelMap = new ConcurrentHashMap<>();
+
     private ProxyClient proxyClient;
+
+    private DataClientPool dataClientPool;
 
     public ProxyHandler(ProxyClient proxyClient, ProxyServiceConfig config) {
         this.config = config;
         this.proxyClient = proxyClient;
+        this.dataClientPool = new DataClientPool(config.getServerHost(), config.getDataPort());
     }
 
     @Override
@@ -47,8 +58,20 @@ public class ProxyHandler extends SimpleChannelInboundHandler<Frame> {
             try {
                 Channel channel = proxyClient.connect(serviceConfig.getIp(), serviceConfig.getPort());
                 map.put(address, channel);
-                Frame frame = new Frame(0x91, serviceKey, address, null);
-                ctx.writeAndFlush(frame);
+                
+                DataClient client = dataClientPool.getClient();
+                dataChannelMap.put(address, client);
+
+                Frame frame = new Frame(0xD, serviceKey, address, null);
+                String key = System.currentTimeMillis() + RandomStringUtils.randomAlphabetic(8);
+                ByteBuf buffer = PooledByteBufAllocator.DEFAULT.buffer();
+                buffer.writeCharSequence(key, Charset.forName("UTF-8"));
+                frame.setPayload(buffer);
+                ChannelPromise send = client.send(frame);
+                send.addListener(f -> {
+                    Frame frame1 = new Frame(0x91, serviceKey, address, null);
+                    ctx.writeAndFlush(frame1);
+                });
             } catch (Exception e) {
                 Frame frame = new Frame(0x90, serviceKey,  localAddress.toString(), null);
                 ctx.writeAndFlush(frame);
@@ -90,6 +113,11 @@ public class ProxyHandler extends SimpleChannelInboundHandler<Frame> {
             if (channel != null && channel.isActive()) {
                 channel.close();
             }
+            DataClient dataClient = dataChannelMap.get(address);
+            if (dataClient != null) {
+                dataClient.revert();
+            }
+
         }
     }
 

@@ -3,6 +3,7 @@ package com.github.wandererex.wormhole.proxy;
 import com.github.wandererex.wormhole.serialize.*;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
@@ -16,8 +17,11 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
@@ -42,6 +46,8 @@ public class DataClient {
 
     private boolean isTaked;
 
+    private Map<String, ChannelPromise> reqMap = new ConcurrentHashMap<>();
+
     public DataClient() {
         this.clientBootstrap = new Bootstrap();
         this.clientGroup = new NioEventLoopGroup();
@@ -62,7 +68,14 @@ public class DataClient {
                                 @Override
                                 protected void channelRead0(ChannelHandlerContext ctx, Frame msg) throws Exception {
                                     if (msg.getOpCode() == 0xD1) {
-                                        int seq = msg.getPayload().readInt();
+                                        ByteBuf payload = msg.getPayload();
+                                        ByteBuf buffer = PooledByteBufAllocator.DEFAULT.buffer();
+                                        buffer.writeBytes(payload);
+                                        String string = buffer.readCharSequence(buffer.readableBytes(), Charset.forName("UTF-8")).toString();
+                                        if (reqMap.containsKey(string)) {
+                                            ChannelPromise channelPromise = reqMap.get(string);
+                                            channelPromise.setSuccess();
+                                        }
                                     }
                                 }
                                 
@@ -86,7 +99,7 @@ public class DataClient {
         if (!isTaked) {
             return false;
         }
-        isTaked = false;;
+        isTaked = false;
         return true;
     }
 
@@ -135,11 +148,25 @@ public class DataClient {
         connect(ip, port);
     }
 
-    public void send(Frame frame) throws Exception {
+    public ChannelPromise send(Frame frame) throws Exception {
         if (!connectSuccess) {
             throw new RuntimeException("no connect!");
         }
-        channel.writeAndFlush(frame).sync();
+
+        ByteBuf payload = frame.getPayload();
+        int opCode = frame.getOpCode();
+        String string = null;
+        if (opCode == 0xD) {
+            ByteBuf buffer = PooledByteBufAllocator.DEFAULT.buffer();
+            buffer.writeBytes(payload);
+            string = buffer.readCharSequence(buffer.readableBytes(), Charset.forName("UTF-8")).toString();
+        }
+        channel.writeAndFlush(frame);
+        ChannelPromise newPromise = channel.newPromise();
+        if (string != null) {
+            reqMap.put(string, newPromise);
+        }
+        return newPromise;
     }
 
     public void shutdown() throws Exception {

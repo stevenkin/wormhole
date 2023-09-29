@@ -29,6 +29,12 @@ public class DataForwardServer {
 
     private CommandHander commandHander;
 
+    public DataForwardServer(Integer port) {
+        this.port = port;
+        this.dataForwardHander = new DataForwardHander();
+        this.commandHander = new CommandHander(dataForwardHander);
+    }
+
     public void open() {
         EventLoopGroup boss = new NioEventLoopGroup();
         EventLoopGroup worker = new NioEventLoopGroup();

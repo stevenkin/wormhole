@@ -38,7 +38,7 @@ public class ForwardHandler extends SimpleChannelInboundHandler<ByteBuf> {
 
      private Map<String, Semaphore> semaphoreMap = new ConcurrentHashMap<>();
 
-     private Map<String, Channel> dataChannelMap = new ConcurrentHashMap<>();
+     private Map<Channel, Channel> dataChannelMap = new ConcurrentHashMap<>();
 
 
     public ForwardHandler(String serviceKey, Channel proxyChannel) {
@@ -50,8 +50,12 @@ public class ForwardHandler extends SimpleChannelInboundHandler<ByteBuf> {
         channelMap.put(client, channel);
     }
 
-    public void buildDataChannel(String address, String serviceKey) {
-
+    public void buildDataChannel(String address, Channel channel) {
+        if (channelMap.containsKey(address)) {
+            Channel channel2 = channelMap.get(address);
+            dataChannelMap.put(channel, channel2);
+            dataChannelMap.put(channel2, channel);
+        }
     }
 
     public void setSemaphore(String client) {
