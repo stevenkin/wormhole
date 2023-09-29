@@ -1,6 +1,11 @@
-package com.github.wandererex.wormhole.server;
+package com.github.wandererex.wormhole.proxy;
 
 import com.github.wandererex.wormhole.serialize.*;
+import com.github.wandererex.wormhole.server.FrameDecoder;
+import com.github.wandererex.wormhole.server.FrameEncoder;
+import com.github.wandererex.wormhole.server.PackageDecoder;
+import com.github.wandererex.wormhole.server.PackageEncoder;
+
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.*;
@@ -36,7 +41,13 @@ public class DataClient {
 
     private Channel channel;
 
-    public DataClient(ProxyServiceConfig config) {
+    private boolean connectSuccess;
+
+    private long lastHeatbeatTime;
+
+    private boolean isTaked;
+
+    public DataClient() {
         this.clientBootstrap = new Bootstrap();
         this.clientGroup = new NioEventLoopGroup();
         clientBootstrap.group(clientGroup).channel(NioSocketChannel.class)
@@ -66,6 +77,22 @@ public class DataClient {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             clientGroup.shutdownGracefully().syncUninterruptibly();
         }));
+    }
+
+    public synchronized boolean take() {
+        if (isTaked) {
+            return false;
+        }
+        isTaked = true;
+        return true;
+    }
+
+    public synchronized boolean revert() {
+        if (!isTaked) {
+            return false;
+        }
+        isTaked = false;;
+        return true;
     }
 
     public void init(String serviceKey, String client) {
@@ -120,16 +147,9 @@ public class DataClient {
         channel.writeAndFlush(frame).sync();
     }
 
-    public void authSuccess() {
-        this.authSuccess = true;
-        channelPromise.setSuccess();
-    }
-
     public void shutdown() throws Exception {
         disconnect();
-        scheduledExecutorService.shutdown();
         clientGroup.shutdownGracefully().syncUninterruptibly();
-        Proxy.latch.countDown();
     }
 
     public void updateHeatbeatTime() {
@@ -137,13 +157,12 @@ public class DataClient {
     }
 
     public void checkIdle() {
-        scheduledExecutorService = new ScheduledThreadPoolExecutor(2);
-        scheduledExecutorService.scheduleWithFixedDelay(() -> {
+        clientGroup.scheduleWithFixedDelay(() -> {
             InetSocketAddress remoteAddress = (InetSocketAddress) channel.remoteAddress();
             Frame frame = new Frame(0x5, null, remoteAddress.toString(), null);
             channel.writeAndFlush(frame);
         }, 0, 5, TimeUnit.SECONDS);
-        scheduledExecutorService.scheduleWithFixedDelay(() -> {
+        clientGroup.scheduleWithFixedDelay(() -> {
             if (lastHeatbeatTime > 0) {
                 if (System.currentTimeMillis() - lastHeatbeatTime > 15000) {
                     log.info("reconnect");
@@ -159,88 +178,5 @@ public class DataClient {
             }
         }, 15, 15, TimeUnit.SECONDS);
     }
-
-    public void syncAuth() throws InterruptedException {
-        channelPromise.sync();
-    }
-
-    public static org.slf4j.Logger getLog() {
-        return log;
-    }
-
-    public Bootstrap getClientBootstrap() {
-        return clientBootstrap;
-    }
-
-    public NioEventLoopGroup getClientGroup() {
-        return clientGroup;
-    }
-
-    public Channel getChannel() {
-        return channel;
-    }
-
-    public Channel getChannel1() {
-        return channel1;
-    }
-
-    public String getServiceKey() {
-        return serviceKey;
-    }
-
-    public boolean isConnectSuccess() {
-        return connectSuccess;
-    }
-
-    public boolean isAuthSuccess() {
-        return authSuccess;
-    }
-
-    public long getLastHeatbeatTime() {
-        return lastHeatbeatTime;
-    }
-
-    public ChannelPromise getChannelPromise() {
-        return channelPromise;
-    }
-
-    public void setClientBootstrap(Bootstrap clientBootstrap) {
-        this.clientBootstrap = clientBootstrap;
-    }
-
-    public void setClientGroup(NioEventLoopGroup clientGroup) {
-        this.clientGroup = clientGroup;
-    }
-
-    public void setChannel(Channel channel) {
-        this.channel = channel;
-    }
-
-
-    public void setConnectSuccess(boolean connectSuccess) {
-        this.connectSuccess = connectSuccess;
-    }
-
-    public void setAuthSuccess(boolean authSuccess) {
-        this.authSuccess = authSuccess;
-    }
-
-    public void setLastHeatbeatTime(long lastHeatbeatTime) {
-        this.lastHeatbeatTime = lastHeatbeatTime;
-    }
-
-    public void setChannelPromise(ChannelPromise channelPromise) {
-        this.channelPromise = channelPromise;
-    }
-
-    public String getRealAddress() {
-        return realAddress;
-    }
-
-    public void setRealAddress(String realAddress) {
-        this.realAddress = realAddress;
-    }
-
-    
 
 }

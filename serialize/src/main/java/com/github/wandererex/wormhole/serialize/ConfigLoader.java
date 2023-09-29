@@ -1,8 +1,8 @@
-package com.github.wandererex.wormhole.proxy;
+package com.github.wandererex.wormhole.serialize;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import com.github.wandererex.wormhole.serialize.ProxyServiceConfig;
+
 import org.apache.commons.io.IOUtils;
 
 import java.io.File;
@@ -17,6 +17,12 @@ public class ConfigLoader {
         InputStream inputStream = ConfigLoader.class.getResourceAsStream(path);
         byte[] bytes = IOUtils.toByteArray(inputStream);
         String s = new String(bytes, StandardCharsets.UTF_8);
+        ProxyServiceConfig parse = parse(s);
+        return parse;
+    }
+
+    public static ProxyServiceConfig parse(String data) throws IOException {
+        String s = data;
         JSONObject jsonObject = JSON.parseObject(s);
         ProxyServiceConfig proxyServiceConfig = new ProxyServiceConfig();
         for (Map.Entry<String, Object> entry : jsonObject.entrySet()) {
@@ -26,6 +32,7 @@ public class ConfigLoader {
         }
         proxyServiceConfig.setServerHost(jsonObject.getString("serverHost"));
         proxyServiceConfig.setServerPort(jsonObject.getInteger("serverPort"));
+        proxyServiceConfig.setServerPort(jsonObject.getInteger("dataPort"));
         return proxyServiceConfig;
     }
 }

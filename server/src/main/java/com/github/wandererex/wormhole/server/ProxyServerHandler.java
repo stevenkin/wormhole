@@ -2,6 +2,7 @@ package com.github.wandererex.wormhole.server;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.github.wandererex.wormhole.serialize.ConfigLoader;
 import com.github.wandererex.wormhole.serialize.Frame;
 import com.github.wandererex.wormhole.serialize.ProxyServiceConfig;
 import io.netty.buffer.PooledByteBufAllocator;
@@ -28,11 +29,7 @@ public class ProxyServerHandler extends SimpleChannelInboundHandler<Frame> {
         InetSocketAddress localAddress = (InetSocketAddress) ctx.channel().localAddress();
         if (msg.getOpCode() == 0x1) {
             String s = msg.getPayload().toString(StandardCharsets.UTF_8);
-            JSONObject jsonObject = JSON.parseObject(s);
-            ProxyServiceConfig proxyServiceConfig = new ProxyServiceConfig();
-            for (Map.Entry<String, Object> entry : jsonObject.entrySet()) {
-                proxyServiceConfig.addConfig(entry.getKey(), JSON.parseObject((String) entry.getValue()).toJavaObject(ProxyServiceConfig.ServiceConfig.class));
-            }
+            ProxyServiceConfig proxyServiceConfig = ConfigLoader.parse(s);
             buildForwardServer(proxyServiceConfig, ctx.channel());
             Frame frame = new Frame();
             frame.setOpCode(0x11);
@@ -88,7 +85,7 @@ public class ProxyServerHandler extends SimpleChannelInboundHandler<Frame> {
     private void buildForwardServer(ProxyServiceConfig config, Channel channel) {
         Map<String, ProxyServiceConfig.ServiceConfig> serviceConfigMap = config.getServiceConfigMap();
         for (Map.Entry<String, ProxyServiceConfig.ServiceConfig> config1 : serviceConfigMap.entrySet()) {
-            ProxyServer proxyServer = new ProxyServer(config1.getKey(), config1.getValue().getMappingPort(), channel);
+            ProxyServer proxyServer = new ProxyServer(config.getDataPort(), config1.getKey(), config1.getValue().getMappingPort(), channel);
             proxyServerMap.put(config1.getKey(), proxyServer);
             proxyServer.open();
             log.info("port mapping open {} {} {}", config1.getKey(), config1.getValue().getPort(), config1.getValue().getMappingPort());

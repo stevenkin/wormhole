@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Semaphore;
 
@@ -33,11 +34,11 @@ public class ForwardHandler extends SimpleChannelInboundHandler<ByteBuf> {
     private String serviceKey;
     private Channel proxyChannel;
 
-    private Map<String, Channel> channelMap = new HashMap<>();
+    private Map<String, Channel> channelMap = new ConcurrentHashMap<>();
 
-     private Map<String, Semaphore> semaphoreMap = new HashMap<>();
+     private Map<String, Semaphore> semaphoreMap = new ConcurrentHashMap<>();
 
-     private DataClientPool dataClientPool = new DataClientPool();
+     private Map<String, Channel> dataChannelMap = new ConcurrentHashMap<>();
 
 
     public ForwardHandler(String serviceKey, Channel proxyChannel) {
@@ -47,6 +48,10 @@ public class ForwardHandler extends SimpleChannelInboundHandler<ByteBuf> {
 
     public void setChannel(String client, Channel channel) {
         channelMap.put(client, channel);
+    }
+
+    public void buildDataChannel(String address, String serviceKey) {
+
     }
 
     public void setSemaphore(String client) {
@@ -78,6 +83,12 @@ public class ForwardHandler extends SimpleChannelInboundHandler<ByteBuf> {
         semaphore.acquire();
         semaphore.release();
         
+        if (dataClient == null) {
+            dataClient = dataClientPool.getClient();
+        }
+
+
+
     }
 
     public void send(Frame msg) {

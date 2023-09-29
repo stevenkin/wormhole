@@ -1,4 +1,4 @@
-package com.github.wandererex.wormhole.proxy;
+package com.github.wandererex.wormhole.server;
 
 import java.net.InetSocketAddress;
 
