@@ -22,9 +22,12 @@ public class Server {
 
     private ChannelFuture channelFuture;
 
+    private ProxyServerHandler proxyServerHandler;
+
     public Server(int port) {
         this.port = port;
-        this.dataForwardHander = new DataForwardHander();
+        this.proxyServerHandler = new ProxyServerHandler();
+        this.dataForwardHander = new DataForwardHander(proxyServerHandler);
         this.commandHander = new CommandHander(dataForwardHander);
     }
 
@@ -43,7 +46,7 @@ public class Server {
                         pipeline.addLast(new FrameEncoder());
                         pipeline.addLast(new PackageDecoder());
                         pipeline.addLast(new PackageEncoder());
-                        pipeline.addLast(new ProxyServerHandler());
+                        pipeline.addLast(proxyServerHandler);
                         pipeline.addLast(dataForwardHander);
                         pipeline.addLast(commandHander);
                     }

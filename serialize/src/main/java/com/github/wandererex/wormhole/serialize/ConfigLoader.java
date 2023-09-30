@@ -2,6 +2,7 @@ package com.github.wandererex.wormhole.serialize;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.github.wandererex.wormhole.serialize.ProxyServiceConfig.ServiceConfig;
 
 import org.apache.commons.io.IOUtils;
 
@@ -34,4 +35,14 @@ public class ConfigLoader {
         proxyServiceConfig.setServerPort(jsonObject.getInteger("serverPort"));
         return proxyServiceConfig;
     }
+
+    public static String serialize(ProxyServiceConfig config) {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("serverHost", config.getServerHost());
+        jsonObject.put("serverPort", config.getServerPort());
+        Map<String, ServiceConfig> map = config.getMap();
+        map.forEach((k, v) -> jsonObject.put(k, JSONObject.toJSON(v)));
+        return jsonObject.toJSONString();
+    }
+
 }

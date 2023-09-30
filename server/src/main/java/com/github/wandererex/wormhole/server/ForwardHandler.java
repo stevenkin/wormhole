@@ -61,6 +61,14 @@ public class ForwardHandler extends SimpleChannelInboundHandler<ByteBuf> {
         }
     }
 
+    public void cleanDataChannel(String client) {
+        channelMap.remove(client);
+        Channel remove = dataChannelMap.remove(client);
+        if (remove != null) {
+            cMap.remove(remove);
+        }
+    }
+
     public void setSemaphore(String client) {
         Semaphore semaphore = new Semaphore(1);
         try {

@@ -39,7 +39,9 @@ public class ProxyHandler extends SimpleChannelInboundHandler<Frame> {
     public ProxyHandler(ProxyClient proxyClient, ProxyServiceConfig config) {
         this.config = config;
         this.proxyClient = proxyClient;
-        this.dataClientPool = new DataClientPool(config.getServerHost(), config.getServerPort());
+        if (config != null) {
+            this.dataClientPool = new DataClientPool(config.getServerHost(), config.getServerPort());
+        }
     }
 
     @Override

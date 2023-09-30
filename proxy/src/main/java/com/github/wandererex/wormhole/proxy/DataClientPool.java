@@ -18,6 +18,7 @@ public class DataClientPool {
     
 
     public DataClientPool(String ip, Integer dataPort) {
+        this.ip = ip;
         this.dataPort = dataPort;
     }
 
@@ -25,19 +26,21 @@ public class DataClientPool {
         int i = index;
         boolean f = false;
         DataClient dataClient = null;
-        for (;;) {
-            if (i == index && f) {
-                break;
-            } else if (i == index) {
-                f = true;
-            }
-            dataClient = list.get(index++);
-            boolean take = dataClient.take();
-            if (take) {
-                return dataClient;
-            }
-            if (index >= list.size()) {
-                index = 0;
+        if (!list.isEmpty()) {
+            for (;;) {
+                if (i == index && f) {
+                    break;
+                } else if (i == index) {
+                    f = true;
+                }
+                dataClient = list.get(index++);
+                boolean take = dataClient.take();
+                if (take) {
+                    return dataClient;
+                }
+                if (index >= list.size()) {
+                    index = 0;
+                }
             }
         }
         dataClient = new DataClient();

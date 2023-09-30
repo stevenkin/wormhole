@@ -9,6 +9,7 @@ import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.util.Attribute;
 import io.netty.util.AttributeKey;
 import lombok.extern.slf4j.Slf4j;
@@ -21,8 +22,14 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Semaphore;
 
 @Slf4j
+@Sharable
 public class ProxyServerHandler extends SimpleChannelInboundHandler<Frame> {
     private Map<String, ProxyServer> proxyServerMap = new HashMap<>();
+
+    public ProxyServer getProxyServer(String serviceKey) {
+        return proxyServerMap.get(serviceKey);
+    }
+
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, Frame msg) throws Exception {
         System.out.println("read: " + msg);
@@ -79,6 +86,10 @@ public class ProxyServerHandler extends SimpleChannelInboundHandler<Frame> {
                 }
                 proxyServer.closeChannel(msg);
             }
+        }
+        if (msg.getOpCode() == 0xD) {
+            log.info("oxD {}", msg);
+            ctx.fireChannelRead(msg);
         }
     }
 

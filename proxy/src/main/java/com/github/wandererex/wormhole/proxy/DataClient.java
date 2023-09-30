@@ -40,8 +40,6 @@ public class DataClient {
 
     private Channel channel;
 
-    private boolean connectSuccess;
-
     private long lastHeatbeatTime;
 
     private boolean isTaked;
@@ -149,7 +147,6 @@ public class DataClient {
 
     public void disconnect() throws Exception {
         channel.close().sync();
-        connectSuccess = false;
     }
 
     public void reconnect() throws Exception {
@@ -158,10 +155,6 @@ public class DataClient {
     }
 
     public ChannelPromise send(Frame frame) throws Exception {
-        if (!connectSuccess) {
-            throw new RuntimeException("no connect!");
-        }
-
         ByteBuf payload = frame.getPayload();
         int opCode = frame.getOpCode();
         String string = null;

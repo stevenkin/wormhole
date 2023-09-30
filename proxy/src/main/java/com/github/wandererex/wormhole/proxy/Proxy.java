@@ -11,6 +11,7 @@ import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.Channel;
 import org.apache.commons.lang3.StringUtils;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
@@ -44,12 +45,9 @@ public class Proxy {
         latch.await();
     }
 
-    private void online(Channel channel) {
-        JSONObject jsonObject = new JSONObject();
-        for (Map.Entry<String, ProxyServiceConfig.ServiceConfig> entry : config.getServiceConfigMap().entrySet()){
-            jsonObject.put(entry.getKey(), JSON.toJSONString(entry.getValue()));
-        }
-        String string = jsonObject.toJSONString();
+    private void online(Channel channel) throws Exception {
+
+        String string = ConfigLoader.serialize(config);
         InetSocketAddress localAddress = (InetSocketAddress) channel.localAddress();
         ByteBuf buffer = PooledByteBufAllocator.DEFAULT.buffer();
         buffer.writeCharSequence(string, StandardCharsets.UTF_8);

@@ -125,5 +125,9 @@ public class ProxyServer {
         forwardHandler.buildDataChannel(address, channel);
     }
 
+    public void forwardData(Channel channel2, ByteBuf msg) {
+        forwardHandler.send(channel2, msg);
+    }
+
     
 }
