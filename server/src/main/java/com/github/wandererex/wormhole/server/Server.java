@@ -16,9 +16,16 @@ import org.apache.commons.lang3.StringUtils;
 public class Server {
     private int port;
 
+    private DataForwardHander dataForwardHander;
+
+    private CommandHander commandHander;
+
     private ChannelFuture channelFuture;
+
     public Server(int port) {
         this.port = port;
+        this.dataForwardHander = new DataForwardHander();
+        this.commandHander = new CommandHander(dataForwardHander);
     }
 
     public void open() {
@@ -37,13 +44,8 @@ public class Server {
                         pipeline.addLast(new PackageDecoder());
                         pipeline.addLast(new PackageEncoder());
                         pipeline.addLast(new ProxyServerHandler());
-                        pipeline.addLast(new ChannelInboundHandlerAdapter() {
-                            @Override
-                            public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-                                cause.printStackTrace();
-                                super.exceptionCaught(ctx, cause);
-                            }
-                        });
+                        pipeline.addLast(dataForwardHander);
+                        pipeline.addLast(commandHander);
                     }
                 });
 

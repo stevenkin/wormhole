@@ -92,6 +92,9 @@ public class DataClient {
             return false;
         }
         isTaked = true;
+        AttributeKey<Boolean> attributeKey = AttributeKey.valueOf("isTaked");
+        Attribute<Boolean> attr = channel.attr(attributeKey);
+        attr.set(true);
         return true;
     }
 
@@ -100,6 +103,9 @@ public class DataClient {
             return false;
         }
         isTaked = false;
+        AttributeKey<Boolean> attributeKey = AttributeKey.valueOf("isTaked");
+        Attribute<Boolean> attr = channel.attr(attributeKey);
+        attr.set(false);
         return true;
     }
 
@@ -117,6 +123,9 @@ public class DataClient {
          * 最多尝试5次和服务端连接
          */
         this.channel = doConnect(ip, port, 5);
+        AttributeKey<Boolean> attributeKey = AttributeKey.valueOf("isTaked");
+        Attribute<Boolean> attr = channel.attr(attributeKey);
+        attr.set(false);
         this.ip = ip;
         this.port = port;
         return channel;

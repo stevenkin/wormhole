@@ -40,13 +40,10 @@ public class ProxyServer {
 
     private ForwardHandler forwardHandler;
 
-    private Integer dataPort;
-
-    public ProxyServer(Integer dataPort, String serviceKey, Integer mappingPort, Channel proxyChannel) {
+    public ProxyServer(String serviceKey, Integer mappingPort, Channel proxyChannel) {
         this.serviceKey = serviceKey;
         this.mappingPort = mappingPort;
         this.proxyChannel = proxyChannel;
-        this.dataPort = dataPort;
         this.forwardHandler = new ForwardHandler(serviceKey, proxyChannel);
     }
 
@@ -72,7 +69,7 @@ public class ProxyServer {
                                 forwardHandler.setSemaphore(address);
                                 forwardHandler.setChannel(address, ctx.channel());
 
-                                buildDataChannel(address, serviceKey);
+                                buildDataChannel(address, ctx.channel());
 
                                 Frame frame = new Frame(0x9, serviceKey, address, null);
                                 proxyChannel.writeAndFlush(frame);
@@ -124,8 +121,8 @@ public class ProxyServer {
         return forwardHandler;
     }
 
-    public void buildDataChannel(String address, String serviceKey) {
-        forwardHandler.buildDataChannel(address, serviceKey);
+    public void buildDataChannel(String address, Channel channel) {
+        forwardHandler.buildDataChannel(address, channel);
     }
 
     

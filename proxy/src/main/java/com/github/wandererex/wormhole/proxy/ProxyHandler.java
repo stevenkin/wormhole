@@ -12,6 +12,7 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.channel.ChannelHandler.Sharable;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.InetSocketAddress;
@@ -23,6 +24,7 @@ import java.util.concurrent.ConcurrentMap;
 import org.apache.commons.lang3.RandomStringUtils;
 
 @Slf4j
+@Sharable
 public class ProxyHandler extends SimpleChannelInboundHandler<Frame> {
     private ProxyServiceConfig config;
 
@@ -37,7 +39,7 @@ public class ProxyHandler extends SimpleChannelInboundHandler<Frame> {
     public ProxyHandler(ProxyClient proxyClient, ProxyServiceConfig config) {
         this.config = config;
         this.proxyClient = proxyClient;
-        this.dataClientPool = new DataClientPool(config.getServerHost(), config.getDataPort());
+        this.dataClientPool = new DataClientPool(config.getServerHost(), config.getServerPort());
     }
 
     @Override
@@ -61,6 +63,7 @@ public class ProxyHandler extends SimpleChannelInboundHandler<Frame> {
                 
                 DataClient client = dataClientPool.getClient();
                 dataChannelMap.put(address, client);
+                proxyClient.setDataClient(client);
 
                 Frame frame = new Frame(0xD, serviceKey, address, null);
                 String key = System.currentTimeMillis() + RandomStringUtils.randomAlphabetic(8);

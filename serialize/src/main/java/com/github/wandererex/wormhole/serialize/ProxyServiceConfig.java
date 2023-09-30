@@ -20,8 +20,6 @@ public class ProxyServiceConfig {
 
     private Integer serverPort;
 
-    private Integer dataPort;
-
     public  ServiceConfig getServiceConfig(String serviceKey) {
         return map.get(serviceKey);
     }

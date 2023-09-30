@@ -27,17 +27,9 @@ public class DataForwardHander extends SimpleChannelInboundHandler<ByteBuf> {
         this.forwardHandler = forwardHandler;
     }
 
-    public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
-
-    }
-
-    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-
-    }
-
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, ByteBuf msg) throws Exception {
-        
+        forwardHandler.send(ctx.channel(), msg);
     }
     
 }

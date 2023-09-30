@@ -17,6 +17,7 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.util.Attribute;
 import io.netty.util.AttributeKey;
 import io.netty.util.ReferenceCountUtil;
+import lombok.val;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.InetSocketAddress;
@@ -38,7 +39,9 @@ public class ForwardHandler extends SimpleChannelInboundHandler<ByteBuf> {
 
      private Map<String, Semaphore> semaphoreMap = new ConcurrentHashMap<>();
 
-     private Map<Channel, Channel> dataChannelMap = new ConcurrentHashMap<>();
+     private Map<String, Channel> dataChannelMap = new ConcurrentHashMap<>();
+
+     private Map<Channel, Channel> cMap = new ConcurrentHashMap<>();
 
 
     public ForwardHandler(String serviceKey, Channel proxyChannel) {
@@ -51,10 +54,10 @@ public class ForwardHandler extends SimpleChannelInboundHandler<ByteBuf> {
     }
 
     public void buildDataChannel(String address, Channel channel) {
+        dataChannelMap.put(address, channel);
         if (channelMap.containsKey(address)) {
             Channel channel2 = channelMap.get(address);
-            dataChannelMap.put(channel, channel2);
-            dataChannelMap.put(channel2, channel);
+            cMap.put(channel, channel2);
         }
     }
 
@@ -87,8 +90,10 @@ public class ForwardHandler extends SimpleChannelInboundHandler<ByteBuf> {
         semaphore.acquire();
         semaphore.release();
 
-
-
+        Channel channel = dataChannelMap.get(address);
+        if (channel != null) {
+            channel.writeAndFlush(msg);
+        }
     }
 
     public void send(Frame msg) {
@@ -121,5 +126,12 @@ public class ForwardHandler extends SimpleChannelInboundHandler<ByteBuf> {
 
     public Map<String, Channel> getChannelMap() {
         return channelMap;
+    }
+
+    public void send(Channel channel, ByteBuf msg) {
+        Channel channel2 = cMap.get(channel);
+        if (channel2 != null && channel2.isActive()) {
+            channel2.writeAndFlush(msg);
+        }
     }
 }

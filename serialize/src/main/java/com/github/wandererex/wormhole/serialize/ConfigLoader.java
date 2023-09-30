@@ -32,7 +32,6 @@ public class ConfigLoader {
         }
         proxyServiceConfig.setServerHost(jsonObject.getString("serverHost"));
         proxyServiceConfig.setServerPort(jsonObject.getInteger("serverPort"));
-        proxyServiceConfig.setServerPort(jsonObject.getInteger("dataPort"));
         return proxyServiceConfig;
     }
 }

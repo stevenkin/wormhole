@@ -52,9 +52,14 @@ public class ProxyClient {
 
     private ScheduledExecutorService scheduledExecutorService;
 
+    private ProxyHandler proxyHandler;
+
+    private DataClient dataClient;
+
     public ProxyClient(ProxyServiceConfig config) {
         this.clientBootstrap = new Bootstrap();
         this.clientGroup = new NioEventLoopGroup();
+        proxyHandler =  new ProxyHandler(ProxyClient.this, config);
         if (config == null) {
             clientBootstrap.group(clientGroup).channel(NioSocketChannel.class)
                     .option(ChannelOption.TCP_NODELAY, true)
@@ -70,6 +75,9 @@ public class ProxyClient {
                                     Frame frame = new Frame(0xB, serviceKey, realAddress, null);
                                     channel1.writeAndFlush(frame);
                                     ctx.fireChannelInactive();
+                                    if (dataClient != null) {
+                                        dataClient.revert();
+                                    }
                                 }
                                 @Override
                                 protected void channelRead0(ChannelHandlerContext ctx, ByteBuf msg) throws Exception {
@@ -106,7 +114,7 @@ public class ProxyClient {
                             ch.pipeline().addLast(new FrameEncoder());
                             ch.pipeline().addLast(new PackageDecoder());
                             ch.pipeline().addLast(new PackageEncoder());
-                            ch.pipeline().addLast(new ProxyHandler(ProxyClient.this, config));
+                            ch.pipeline().addLast(proxyHandler);
                         }
                     });
         }
@@ -122,6 +130,10 @@ public class ProxyClient {
 
     public void setServiceKey(String serviceKey) {
         this.serviceKey = serviceKey;
+    }
+
+    public void setDataClient(DataClient dataClient) {
+        this.dataClient = dataClient;
     }
 
     
