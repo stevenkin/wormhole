@@ -47,7 +47,6 @@ public class Server {
                         pipeline.addLast(new PackageDecoder());
                         pipeline.addLast(new PackageEncoder());
                         pipeline.addLast(proxyServerHandler);
-                        pipeline.addLast(dataForwardHander);
                         pipeline.addLast(commandHander);
                     }
                 });

@@ -6,14 +6,17 @@ import com.github.wandererex.wormhole.serialize.Task;
 import com.github.wandererex.wormhole.serialize.TaskExecutor;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
+import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelPromise;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.channel.unix.Buffer;
 import io.netty.util.Attribute;
 import io.netty.util.AttributeKey;
 import io.netty.util.ReferenceCountUtil;
@@ -31,7 +34,7 @@ import java.util.concurrent.Semaphore;
 
 @ChannelHandler.Sharable
 @Slf4j
-public class ForwardHandler extends SimpleChannelInboundHandler<ByteBuf> {
+public class ForwardHandler extends ChannelInboundHandlerAdapter {
     private String serviceKey;
     private Channel proxyChannel;
 
@@ -51,6 +54,14 @@ public class ForwardHandler extends SimpleChannelInboundHandler<ByteBuf> {
 
     public void setChannel(String client, Channel channel) {
         channelMap.put(client, channel);
+    }
+
+    public void refuse(String client) {
+        semaphoreMap.remove(client);
+        Channel channel = channelMap.remove(client);
+        if (channel != null && channel.isActive()) {
+            channel.close();
+        }
     }
 
     public void buildDataChannel(String address, Channel channel) {
@@ -87,7 +98,7 @@ public class ForwardHandler extends SimpleChannelInboundHandler<ByteBuf> {
     
 
     @Override
-    protected void channelRead0(ChannelHandlerContext ctx, ByteBuf msg) throws Exception {
+    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         log.info("收到请求{}", System.currentTimeMillis());
         String address = ((InetSocketAddress)(ctx.channel().remoteAddress())).toString();
         Semaphore semaphore = semaphoreMap.get(address);

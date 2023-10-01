@@ -68,9 +68,6 @@ public class ProxyServer {
                                 String address = ((InetSocketAddress)(ctx.channel().remoteAddress())).toString();
                                 forwardHandler.setSemaphore(address);
                                 forwardHandler.setChannel(address, ctx.channel());
-
-                                buildDataChannel(address, ctx.channel());
-
                                 Frame frame = new Frame(0x9, serviceKey, address, null);
                                 proxyChannel.writeAndFlush(frame);
                             }
@@ -80,6 +77,8 @@ public class ProxyServer {
                                 String address = ((InetSocketAddress)(ctx.channel().remoteAddress())).toString();
                                 Frame frame = new Frame(0xA, serviceKey, address, null);
                                 proxyChannel.writeAndFlush(frame);
+                                forwardHandler.refuse(address);
+                                forwardHandler.cleanDataChannel(address);
                                 ctx.fireChannelInactive();
                             }
                         });

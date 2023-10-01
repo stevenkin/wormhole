@@ -46,6 +46,10 @@ public class DataClient {
 
     private Map<String, ChannelPromise> reqMap = new ConcurrentHashMap<>();
 
+    private DataClientHandler dataClientHandler = new DataClientHandler();
+
+    private ProxyClient proxyClient;
+
     public DataClient() {
         this.clientBootstrap = new Bootstrap();
         this.clientGroup = new NioEventLoopGroup();
@@ -67,12 +71,16 @@ public class DataClient {
                                 protected void channelRead0(ChannelHandlerContext ctx, Frame msg) throws Exception {
                                     if (msg.getOpCode() == 0xD1) {
                                         ByteBuf payload = msg.getPayload();
-                                        ByteBuf buffer = PooledByteBufAllocator.DEFAULT.buffer();
-                                        buffer.writeBytes(payload);
-                                        String string = buffer.readCharSequence(buffer.readableBytes(), Charset.forName("UTF-8")).toString();
+                                        String string = payload.readCharSequence(payload.readableBytes(), Charset.forName("UTF-8")).toString();
                                         if (reqMap.containsKey(string)) {
                                             ChannelPromise channelPromise = reqMap.get(string);
                                             channelPromise.setSuccess();
+                                            ctx.pipeline().remove(FrameDecoder.class);
+                                            ctx.pipeline().remove(FrameEncoder.class);
+                                            ctx.pipeline().remove(PackageDecoder.class);
+                                            ctx.pipeline().remove(PackageEncoder.class);
+                                            ctx.pipeline().remove(this);
+                                            ctx.pipeline().addLast(dataClientHandler);
                                         }
                                     }
                                 }
@@ -104,6 +112,8 @@ public class DataClient {
         AttributeKey<Boolean> attributeKey = AttributeKey.valueOf("isTaked");
         Attribute<Boolean> attr = channel.attr(attributeKey);
         attr.set(false);
+        proxyClient = null;
+
         return true;
     }
 
@@ -159,15 +169,22 @@ public class DataClient {
         int opCode = frame.getOpCode();
         String string = null;
         if (opCode == 0xD) {
-            ByteBuf buffer = PooledByteBufAllocator.DEFAULT.buffer();
-            buffer.writeBytes(payload);
-            string = buffer.readCharSequence(buffer.readableBytes(), Charset.forName("UTF-8")).toString();
+            payload.markReaderIndex();
+            string = payload.readCharSequence(payload.readableBytes(), Charset.forName("UTF-8")).toString();
+            payload.resetReaderIndex();
+            channel.writeAndFlush(frame);
+            ChannelPromise newPromise = channel.newPromise();
+            if (string != null) {
+                reqMap.put(string, newPromise);
+            }
+            return newPromise;
         }
-        channel.writeAndFlush(frame);
+        throw new UnsupportedOperationException();
+    }
+
+    public ChannelPromise send(ByteBuf byteBuf) {
         ChannelPromise newPromise = channel.newPromise();
-        if (string != null) {
-            reqMap.put(string, newPromise);
-        }
+        channel.writeAndFlush(byteBuf, newPromise);
         return newPromise;
     }
 
@@ -201,6 +218,11 @@ public class DataClient {
                 }
             }
         }, 15, 15, TimeUnit.SECONDS);
+    }
+
+    public void setProxyClient(ProxyClient proxyClient) {
+        this.proxyClient = proxyClient;
+        this.dataClientHandler.setProxyClient(proxyClient);
     }
 
 }

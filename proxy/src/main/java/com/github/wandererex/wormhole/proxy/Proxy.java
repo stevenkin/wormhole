@@ -46,7 +46,6 @@ public class Proxy {
     }
 
     private void online(Channel channel) throws Exception {
-
         String string = ConfigLoader.serialize(config);
         InetSocketAddress localAddress = (InetSocketAddress) channel.localAddress();
         ByteBuf buffer = PooledByteBufAllocator.DEFAULT.buffer();

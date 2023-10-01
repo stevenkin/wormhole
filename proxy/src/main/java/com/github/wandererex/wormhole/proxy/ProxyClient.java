@@ -68,7 +68,7 @@ public class ProxyClient {
                         //初始化时将handler设置到ChannelPipeline
                         @Override
                         public void initChannel(SocketChannel ch) {
-                            ch.pipeline().addLast(new SimpleChannelInboundHandler<ByteBuf>() {
+                            ch.pipeline().addLast(new ChannelInboundHandlerAdapter() {
 
                                 @Override
                                 public void channelInactive(ChannelHandlerContext ctx) throws Exception {
@@ -80,20 +80,10 @@ public class ProxyClient {
                                     }
                                 }
                                 @Override
-                                protected void channelRead0(ChannelHandlerContext ctx, ByteBuf msg) throws Exception {
+                                public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
                                     log.info("收到内网服务响应{}", System.currentTimeMillis());
-                                    if (channel1 != null) {
-                                        List<Frame> frames = NetworkUtil.byteArraytoFrameList(msg, serviceKey, realAddress);
-                                        log.info("proxy read from service data {}", msg);
-                                        List<ChannelFuture> channelFutures = new ArrayList<>();
-                                        for (Frame frame : frames) {
-                                            log.info("server mapping port read {}", frame);
-                                            ChannelFuture writeAndFlush = channel1.writeAndFlush(frame);
-                                            channelFutures.add(writeAndFlush);
-                                        }
-                                        for (ChannelFuture future : channelFutures) {
-                                            future.sync();
-                                        }
+                                    if (dataClient != null) {
+                                        dataClient.send((ByteBuf) msg);
                                     }
                                     log.info("响应发给服务器{}", System.currentTimeMillis());
                                 }
@@ -180,11 +170,18 @@ public class ProxyClient {
         connect(ip, port);
     }
 
-    public void send(Frame frame) throws Exception {
+    public void send(Frame msg) throws Exception {
         if (!connectSuccess) {
             throw new RuntimeException("no connect!");
         }
-        channel.writeAndFlush(frame).sync();
+        channel.writeAndFlush(msg);
+    }
+
+    public void send(ByteBuf byteBuf) throws Exception {
+        if (!connectSuccess) {
+            throw new RuntimeException("no connect!");
+        }
+        channel.writeAndFlush(byteBuf);
     }
 
     public void authSuccess() {

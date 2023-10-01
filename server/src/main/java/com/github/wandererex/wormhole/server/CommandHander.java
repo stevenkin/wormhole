@@ -37,12 +37,14 @@ public class CommandHander extends SimpleChannelInboundHandler<Frame>{
             frame.setOpCode(0xD1);
             frame.setRealClientAddress(realClientAddress);
             frame.setServiceKey(serviceKey);
+            frame.setPayload(msg.getPayload());
             ctx.writeAndFlush(frame).addListener(f -> {
                 if (f.isSuccess()) {
                     ctx.pipeline().remove(FrameDecoder.class);
                     ctx.pipeline().remove(FrameEncoder.class);
                     ctx.pipeline().remove(PackageDecoder.class);
                     ctx.pipeline().remove(PackageEncoder.class);
+                    ctx.pipeline().addLast(dataForwardHander);
                 }
             });
 

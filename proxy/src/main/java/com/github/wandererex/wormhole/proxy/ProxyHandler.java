@@ -66,6 +66,7 @@ public class ProxyHandler extends SimpleChannelInboundHandler<Frame> {
                 DataClient client = dataClientPool.getClient();
                 dataChannelMap.put(address, client);
                 proxyClient.setDataClient(client);
+                client.setProxyClient(proxyClient);
 
                 Frame frame = new Frame(0xD, serviceKey, address, null);
                 String key = System.currentTimeMillis() + RandomStringUtils.randomAlphabetic(8);

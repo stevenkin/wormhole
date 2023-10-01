@@ -9,11 +9,12 @@ import com.github.wandererex.wormhole.serialize.Frame;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.ChannelHandler.Sharable;
 
 @Sharable
-public class DataForwardHander extends SimpleChannelInboundHandler<ByteBuf> {
+public class DataForwardHander extends ChannelInboundHandlerAdapter {
     private Map<Channel, String> channelMap = new ConcurrentHashMap<>();
 
     private ProxyServerHandler proxyServerHandler;
@@ -31,12 +32,15 @@ public class DataForwardHander extends SimpleChannelInboundHandler<ByteBuf> {
     }
 
     @Override
-    protected void channelRead0(ChannelHandlerContext ctx, ByteBuf msg) throws Exception {
+    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+        if (!(msg instanceof ByteBuf)) {
+            ctx.fireChannelRead(msg);
+        }
         if (channelMap.containsKey(ctx.channel())) {
             String string = channelMap.get(ctx.channel());
             ProxyServer proxyServer = proxyServerHandler.getProxyServer(string);
             if (proxyServer != null) {
-                proxyServer.forwardData(ctx.channel(), msg);
+                proxyServer.forwardData(ctx.channel(), (ByteBuf) msg);
             }
         }
     }
