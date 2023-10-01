@@ -1,6 +1,7 @@
 package com.github.wandererex.wormhole.proxy;
 
 import com.github.wandererex.wormhole.serialize.Frame;
+import com.github.wandererex.wormhole.serialize.Holder;
 import com.github.wandererex.wormhole.serialize.ProxyServiceConfig;
 import com.github.wandererex.wormhole.serialize.Task;
 import com.github.wandererex.wormhole.serialize.TaskExecutor;
@@ -13,6 +14,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.ChannelHandler.Sharable;
+import io.netty.util.concurrent.GenericFutureListener;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.InetSocketAddress;
@@ -54,6 +56,7 @@ public class ProxyHandler extends SimpleChannelInboundHandler<Frame> {
         InetSocketAddress localAddress = (InetSocketAddress) ctx.channel().localAddress();
         String address = msg.getRealClientAddress();
         if (opCode == 0x9) {
+            log.info("0x9 {}", msg);
             ProxyServiceConfig.ServiceConfig serviceConfig = config.getServiceConfig(serviceKey);
             ProxyClient proxyClient = new ProxyClient(null);
             proxyClient.setChannel1(ctx.channel());
@@ -76,23 +79,51 @@ public class ProxyHandler extends SimpleChannelInboundHandler<Frame> {
                 ChannelPromise send = client.send(frame);
                 send.addListener(f -> {
                     Frame frame1 = new Frame(0x91, serviceKey, address, null);
-                    ctx.writeAndFlush(frame1);
+                    Holder<GenericFutureListener> holder = new Holder<>();
+                    GenericFutureListener listener = f1 -> {
+                        if (!f1.isSuccess()) {
+                            ctx.writeAndFlush(frame1).addListener(holder.t);
+                        }
+                    };
+                    holder.t = listener;
+                    ctx.writeAndFlush(frame1).addListener(holder.t);
                 });
             } catch (Exception e) {
                 Frame frame = new Frame(0x90, serviceKey,  localAddress.toString(), null);
-                ctx.writeAndFlush(frame);
+                    Holder<GenericFutureListener> holder = new Holder<>();
+                    GenericFutureListener listener = f1 -> {
+                        if (!f1.isSuccess()) {
+                            ctx.writeAndFlush(frame).addListener(holder.t);
+                        }
+                    };
+                    holder.t = listener;
+                    ctx.writeAndFlush(frame).addListener(holder.t);
             }
         } else if (opCode == 0x3) {
             log.info("收到服务器转发的请求{}", System.currentTimeMillis());
             Channel channel = map.get(address);
             if (channel == null) {
-                Frame frame = new Frame(0x40, serviceKey, localAddress.toString(), null);
-                ctx.writeAndFlush(frame);
+                    Frame frame = new Frame(0x40, serviceKey, localAddress.toString(), null);
+                    Holder<GenericFutureListener> holder = new Holder<>();
+                    GenericFutureListener listener = f1 -> {
+                        if (!f1.isSuccess()) {
+                            ctx.writeAndFlush(frame).addListener(holder.t);
+                        }
+                    };
+                    holder.t = listener;
+                    ctx.writeAndFlush(frame).addListener(holder.t);
             } else {
                 log.info("proxy send to service data {}", payload);
                 channel.writeAndFlush(payload);
                 Frame frame = new Frame(0x41, serviceKey, localAddress.toString(), null);
-                ctx.writeAndFlush(frame);
+                Holder<GenericFutureListener> holder = new Holder<>();
+                    GenericFutureListener listener = f1 -> {
+                        if (!f1.isSuccess()) {
+                            ctx.writeAndFlush(frame).addListener(holder.t);
+                        }
+                    };
+                    holder.t = listener;
+                    ctx.writeAndFlush(frame).addListener(holder.t);
                 log.info("请求发给内网服务{}", System.currentTimeMillis());
             }
         } else if (opCode == 0x10) {

@@ -12,6 +12,7 @@ import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.util.Attribute;
 import io.netty.util.AttributeKey;
+import io.netty.util.concurrent.GenericFutureListener;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.InetSocketAddress;
@@ -167,7 +168,15 @@ public class ProxyClient {
 
     public void reconnect() throws Exception {
         disconnect();
-        connect(ip, port);
+        Channel connect = connect(ip, port);
+        Frame frame = new Frame(0xE, null, null, null);
+        Holder<GenericFutureListener> holder = new Holder<>();
+        GenericFutureListener listener = f1 -> {
+            if (!f1.isSuccess()) {
+                connect.writeAndFlush(frame).addListener(holder.t);
+            }
+        };
+        holder.t = listener;
     }
 
     public void send(Frame msg) throws Exception {

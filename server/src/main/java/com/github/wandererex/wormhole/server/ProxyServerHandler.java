@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.github.wandererex.wormhole.serialize.ConfigLoader;
 import com.github.wandererex.wormhole.serialize.Frame;
+import com.github.wandererex.wormhole.serialize.Holder;
 import com.github.wandererex.wormhole.serialize.ProxyServiceConfig;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.Channel;
@@ -12,6 +13,7 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.util.Attribute;
 import io.netty.util.AttributeKey;
+import io.netty.util.concurrent.GenericFutureListener;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.InetSocketAddress;
@@ -20,6 +22,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Semaphore;
+
 
 @Slf4j
 @Sharable
@@ -42,27 +45,42 @@ public class ProxyServerHandler extends SimpleChannelInboundHandler<Frame> {
             frame.setOpCode(0x11);
             frame.setRealClientAddress(localAddress.toString());
             frame.setServiceKey(msg.getServiceKey());
-            ctx.writeAndFlush(frame);
+            Holder<GenericFutureListener> holder = new Holder<>();
+            GenericFutureListener listener = f -> {
+                if (!f.isSuccess()) {
+                    ctx.writeAndFlush(frame).addListener(holder.t);
+                }
+            };
+            holder.t = listener;
+            ctx.writeAndFlush(frame).addListener(holder.t);
+            System.out.println("write: " + msg);
+        }
+        if (msg.getOpCode() == 0xE) {
+            proxyServerMap.values().forEach(p -> p.setProxyChannel(ctx.channel()));
             System.out.println("write: " + msg);
         }
         if (msg.getOpCode() == 0x5) {
             Frame frame = new Frame(0x6, null, localAddress.toString(), null);
-            ctx.writeAndFlush(frame);
+            Holder<GenericFutureListener> holder = new Holder<>();
+            GenericFutureListener listener = f -> {
+                if (!f.isSuccess()) {
+                    ctx.writeAndFlush(frame).addListener(holder.t);
+                }
+            };
+            holder.t = listener;
+            ctx.writeAndFlush(frame).addListener(holder.t);
             System.out.println("write: " + frame);
         }
         if (msg.getOpCode() == 0x91) {
             ProxyServer proxyServer = proxyServerMap.get(msg.getServiceKey());
             if (proxyServer != null) {
-                Semaphore semaphore = proxyServer.getForwardHandler().getSemaphore(msg.getRealClientAddress());
-                if (semaphore != null) {
-                    semaphore.release();
-                }
+                proxyServer.pass(msg.getRealClientAddress());
             }
         }
         if (msg.getOpCode() == 0x90) {
             ProxyServer proxyServer = proxyServerMap.get(msg.getServiceKey());
             if (proxyServer != null) {
-                proxyServer.getForwardHandler().refuse(msg.getRealClientAddress());
+                proxyServer.refuse(msg.getRealClientAddress());
             }
         }
         if (msg.getOpCode() == 0x3) {
@@ -73,7 +91,14 @@ public class ProxyServerHandler extends SimpleChannelInboundHandler<Frame> {
                 proxyServer.send(msg);
             }
             Frame frame = new Frame(0x41, null, localAddress.toString(), null);
-            ctx.writeAndFlush(frame);
+            Holder<GenericFutureListener> holder = new Holder<>();
+            GenericFutureListener listener = f -> {
+                if (!f.isSuccess()) {
+                    ctx.writeAndFlush(frame).addListener(holder.t);
+                }
+            };
+            holder.t = listener;
+            ctx.writeAndFlush(frame).addListener(holder.t);
             System.out.println("write: " + frame);
         }
         if (msg.getOpCode() == 0x40) {
@@ -86,10 +111,6 @@ public class ProxyServerHandler extends SimpleChannelInboundHandler<Frame> {
             log.info("server offline");
             ProxyServer proxyServer = proxyServerMap.get(msg.getServiceKey());
             if (proxyServer != null) {
-                Semaphore semaphore = proxyServer.getForwardHandler().getSemaphore(msg.getRealClientAddress());
-                if (semaphore != null) {
-                    semaphore.acquire();
-                }
                 proxyServer.closeChannel(msg);
             }
         }

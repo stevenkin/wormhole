@@ -3,12 +3,14 @@ package com.github.wandererex.wormhole.server;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.github.wandererex.wormhole.serialize.Frame;
+import com.github.wandererex.wormhole.serialize.Holder;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.ChannelHandler.Sharable;
+import io.netty.util.concurrent.GenericFutureListener;
 import lombok.extern.slf4j.Slf4j;
 
 @Sharable
@@ -38,16 +40,20 @@ public class CommandHander extends SimpleChannelInboundHandler<Frame>{
             frame.setRealClientAddress(realClientAddress);
             frame.setServiceKey(serviceKey);
             frame.setPayload(msg.getPayload());
-            ctx.writeAndFlush(frame).addListener(f -> {
-                if (f.isSuccess()) {
+            Holder<GenericFutureListener> holder = new Holder<>();
+            GenericFutureListener listener = f1 -> {
+                if (!f1.isSuccess()) {
+                    ctx.writeAndFlush(frame).addListener(holder.t);
+                } else {
                     ctx.pipeline().remove(FrameDecoder.class);
                     ctx.pipeline().remove(FrameEncoder.class);
                     ctx.pipeline().remove(PackageDecoder.class);
                     ctx.pipeline().remove(PackageEncoder.class);
                     ctx.pipeline().addLast(dataForwardHander);
                 }
-            });
-
+            };
+            holder.t = listener;
+            ctx.writeAndFlush(frame).addListener(holder.t);
         }
     }
 

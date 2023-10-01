@@ -40,11 +40,11 @@ public class ForwardHandler extends ChannelInboundHandlerAdapter {
 
     private Map<String, Channel> channelMap = new ConcurrentHashMap<>();
 
-     private Map<String, Semaphore> semaphoreMap = new ConcurrentHashMap<>();
-
      private Map<String, Channel> dataChannelMap = new ConcurrentHashMap<>();
 
      private Map<Channel, Channel> cMap = new ConcurrentHashMap<>();
+
+     private Map<String, CountDownLatch> lMap = new ConcurrentHashMap<>();
 
 
     public ForwardHandler(String serviceKey, Channel proxyChannel) {
@@ -57,7 +57,6 @@ public class ForwardHandler extends ChannelInboundHandlerAdapter {
     }
 
     public void refuse(String client) {
-        semaphoreMap.remove(client);
         Channel channel = channelMap.remove(client);
         if (channel != null && channel.isActive()) {
             channel.close();
@@ -80,35 +79,16 @@ public class ForwardHandler extends ChannelInboundHandlerAdapter {
         }
     }
 
-    public void setSemaphore(String client) {
-        Semaphore semaphore = new Semaphore(1);
-        try {
-            semaphore.acquire();
-        } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        semaphoreMap.put(client, semaphore);
-    }
-
-    public Semaphore getSemaphore(String client) {
-        return semaphoreMap.get(client);
-    }
-
-    
-
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         log.info("收到请求{}", System.currentTimeMillis());
         String address = ((InetSocketAddress)(ctx.channel().remoteAddress())).toString();
-        Semaphore semaphore = semaphoreMap.get(address);
-        if (semaphore == null) {
-            ctx.fireChannelRead(msg);
+        CountDownLatch countDownLatch = lMap.get(address);
+        if (countDownLatch == null) {
+            ctx.close();
             return;
         }
-        semaphore.acquire();
-        semaphore.release();
-
+        countDownLatch.await();
         Channel channel = dataChannelMap.get(address);
         if (channel != null) {
             channel.writeAndFlush(msg);
@@ -152,5 +132,20 @@ public class ForwardHandler extends ChannelInboundHandlerAdapter {
         if (channel2 != null && channel2.isActive()) {
             channel2.writeAndFlush(msg);
         }
+    }
+
+    public void pass(String realClientAddress) {
+        CountDownLatch countDownLatch = lMap.get(realClientAddress);
+        if (countDownLatch != null) {
+            countDownLatch.countDown();
+        }
+    }
+
+    public void buildLatch(String client) {
+        lMap.put(client, new CountDownLatch(1));
+    }
+
+    public void removeLatch(String address) {
+        lMap.remove(address);
     }
 }

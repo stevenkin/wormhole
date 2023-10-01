@@ -34,7 +34,7 @@ public class ProxyServer {
 
     private ChannelFuture channelFuture;
 
-    private Channel proxyChannel;
+    private volatile Channel proxyChannel;
 
     private Channel channel;
 
@@ -66,9 +66,9 @@ public class ProxyServer {
                             @Override
                             public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
                                 String address = ((InetSocketAddress)(ctx.channel().remoteAddress())).toString();
-                                forwardHandler.setSemaphore(address);
                                 forwardHandler.setChannel(address, ctx.channel());
                                 Frame frame = new Frame(0x9, serviceKey, address, null);
+                                forwardHandler.buildLatch(address);
                                 proxyChannel.writeAndFlush(frame);
                             }
 
@@ -78,6 +78,7 @@ public class ProxyServer {
                                 Frame frame = new Frame(0xA, serviceKey, address, null);
                                 proxyChannel.writeAndFlush(frame);
                                 forwardHandler.refuse(address);
+                                forwardHandler.removeLatch(address);
                                 forwardHandler.cleanDataChannel(address);
                                 ctx.fireChannelInactive();
                             }
@@ -114,6 +115,7 @@ public class ProxyServer {
 
     public void closeChannel(Frame msg) {
         forwardHandler.closeChannel(msg);
+        forwardHandler.removeLatch(msg.getRealClientAddress());
     }
 
     public ForwardHandler getForwardHandler() {
@@ -128,5 +130,16 @@ public class ProxyServer {
         forwardHandler.send(channel2, msg);
     }
 
+    public void pass(String realClientAddress) {
+        forwardHandler.pass(realClientAddress);
+    }
+
+    public void refuse(String realClientAddress) {
+        forwardHandler.refuse(realClientAddress);
+    }
+
+    public void setProxyChannel(Channel channel2) {
+        this.proxyChannel = channel2;
+    }
     
 }
