@@ -102,7 +102,7 @@ public class DataClient {
         ch.pipeline().addLast(new FrameEncoder());
         ch.pipeline().addLast(new PackageDecoder());
         ch.pipeline().addLast(new PackageEncoder());
-        ch.pipeline().addLast(new DataClientCmdHandler(DataClient.this));
+        ch.pipeline().addLast(new DataClientCmdHandler(this));
         return true;
     }
 
