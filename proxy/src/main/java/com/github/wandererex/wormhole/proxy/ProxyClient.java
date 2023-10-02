@@ -13,12 +13,15 @@ import io.netty.handler.logging.LoggingHandler;
 import io.netty.util.Attribute;
 import io.netty.util.AttributeKey;
 import io.netty.util.concurrent.GenericFutureListener;
+import io.netty.util.internal.ConcurrentSet;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
@@ -70,7 +73,6 @@ public class ProxyClient {
                         @Override
                         public void initChannel(SocketChannel ch) {
                             ch.pipeline().addLast(new ChannelInboundHandlerAdapter() {
-
                                 @Override
                                 public void channelInactive(ChannelHandlerContext ctx) throws Exception {
                                     Frame frame = new Frame(0xB, serviceKey, realAddress, null);

@@ -35,6 +35,7 @@ public class DataForwardHander extends ChannelInboundHandlerAdapter {
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         if (!(msg instanceof ByteBuf)) {
             ctx.fireChannelRead(msg);
+            return;
         }
         if (channelMap.containsKey(ctx.channel())) {
             String string = channelMap.get(ctx.channel());

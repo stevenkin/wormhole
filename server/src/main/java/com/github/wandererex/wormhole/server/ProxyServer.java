@@ -20,12 +20,14 @@ import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.util.Attribute;
 import io.netty.util.AttributeKey;
+import io.netty.util.internal.ConcurrentSet;
 import lombok.Getter;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 
 public class ProxyServer {
@@ -81,10 +83,10 @@ public class ProxyServer {
                             public void channelInactive(ChannelHandlerContext ctx) throws Exception {
                                 String address = ((InetSocketAddress)(ctx.channel().remoteAddress())).toString();
                                 Frame frame = new Frame(0xA, serviceKey, address, null);
-                                proxyChannel.writeAndFlush(frame);
                                 forwardHandler.refuse(address);
                                 forwardHandler.removeLatch(address);
                                 forwardHandler.cleanDataChannel(address);
+                                proxyChannel.writeAndFlush(frame);
                                 ctx.fireChannelInactive();
                             }
                         });

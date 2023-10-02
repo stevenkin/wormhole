@@ -6,9 +6,11 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.channel.ChannelHandler.Sharable;
 
+@Sharable
 public class DataClientHandler extends ChannelInboundHandlerAdapter {
-    private ProxyClient proxyClient;
+    private volatile ProxyClient proxyClient;
 
     public void setProxyClient(ProxyClient proxyClient) {
         this.proxyClient = proxyClient;

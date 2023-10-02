@@ -70,6 +70,7 @@ public class DataClient {
                             ch.pipeline().addLast(new PackageDecoder());
                             ch.pipeline().addLast(new PackageEncoder());
                             ch.pipeline().addLast(new DataClientCmdHandler(DataClient.this));
+                            ch.pipeline().addLast(new LoggingHandler());
                         }
                     });
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
@@ -82,9 +83,6 @@ public class DataClient {
             return false;
         }
         isTaked = true;
-        AttributeKey<Boolean> attributeKey = AttributeKey.valueOf("isTaked");
-        Attribute<Boolean> attr = channel.attr(attributeKey);
-        attr.set(true);
         return true;
     }
 
@@ -93,11 +91,9 @@ public class DataClient {
             return false;
         }
         isTaked = false;
-        AttributeKey<Boolean> attributeKey = AttributeKey.valueOf("isTaked");
-        Attribute<Boolean> attr = channel.attr(attributeKey);
-        attr.set(false);
         proxyClient = null;
         Channel ch  = channel;
+        ch.pipeline().remove(DataClientHandler.class);
         ch.pipeline().addLast(new FrameDecoder());
         ch.pipeline().addLast(new FrameEncoder());
         ch.pipeline().addLast(new PackageDecoder());
@@ -168,11 +164,11 @@ public class DataClient {
                 }
             };
             holder.t = listener;
-            channel.writeAndFlush(frame).addListener(holder.t);
             ChannelPromise newPromise = channel.newPromise();
             if (string != null) {
                 reqMap.put(string, newPromise);
             }
+            channel.writeAndFlush(frame).addListener(holder.t);
             return newPromise;
         }
         throw new UnsupportedOperationException();

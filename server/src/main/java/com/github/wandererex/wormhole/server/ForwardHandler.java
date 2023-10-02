@@ -79,6 +79,7 @@ public class ForwardHandler extends ChannelInboundHandlerAdapter {
         Channel remove = dataChannelMap.remove(client);
         if (remove != null) {
             cMap.remove(remove);
+            remove.pipeline().remove(DataForwardHander.class);
             remove.pipeline().addLast(new FrameDecoder());
             remove.pipeline().addLast(new FrameEncoder());
             remove.pipeline().addLast(new PackageDecoder());
