@@ -31,7 +31,7 @@ public class ProxyClient {
 
     private NioEventLoopGroup clientGroup;
 
-    private Channel channel;
+    private volatile Channel channel;
 
     private Channel channel1;
 
@@ -177,6 +177,7 @@ public class ProxyClient {
             }
         };
         holder.t = listener;
+        connect.writeAndFlush(frame).addListener(holder.t);
     }
 
     public void send(Frame msg) throws Exception {

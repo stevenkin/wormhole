@@ -13,6 +13,7 @@ import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.util.Attribute;
 import io.netty.util.AttributeKey;
+import io.netty.util.concurrent.GenericFutureListener;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.InetSocketAddress;
@@ -74,13 +75,13 @@ public class DataClient {
                                         String string = payload.readCharSequence(payload.readableBytes(), Charset.forName("UTF-8")).toString();
                                         if (reqMap.containsKey(string)) {
                                             ChannelPromise channelPromise = reqMap.get(string);
-                                            channelPromise.setSuccess();
                                             ctx.pipeline().remove(FrameDecoder.class);
                                             ctx.pipeline().remove(FrameEncoder.class);
                                             ctx.pipeline().remove(PackageDecoder.class);
                                             ctx.pipeline().remove(PackageEncoder.class);
                                             ctx.pipeline().remove(this);
                                             ctx.pipeline().addLast(dataClientHandler);
+                                            channelPromise.setSuccess();
                                         }
                                     }
                                 }
@@ -172,7 +173,14 @@ public class DataClient {
             payload.markReaderIndex();
             string = payload.readCharSequence(payload.readableBytes(), Charset.forName("UTF-8")).toString();
             payload.resetReaderIndex();
-            channel.writeAndFlush(frame);
+            Holder<GenericFutureListener> holder = new Holder<>();
+            GenericFutureListener listener = f1 -> {
+                if (!f1.isSuccess()) {
+                    channel.writeAndFlush(frame).addListener(holder.t);;
+                }
+            };
+            holder.t = listener;
+            channel.writeAndFlush(frame).addListener(holder.t);
             ChannelPromise newPromise = channel.newPromise();
             if (string != null) {
                 reqMap.put(string, newPromise);

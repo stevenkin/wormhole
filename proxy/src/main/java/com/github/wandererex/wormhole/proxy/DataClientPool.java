@@ -34,12 +34,12 @@ public class DataClientPool {
                     f = true;
                 }
                 dataClient = list.get(index++);
+                if (index >= list.size()) {
+                    index = 0;
+                }
                 boolean take = dataClient.take();
                 if (take) {
                     return dataClient;
-                }
-                if (index >= list.size()) {
-                    index = 0;
                 }
             }
         }

@@ -49,7 +49,10 @@ public class CommandHander extends SimpleChannelInboundHandler<Frame>{
                     ctx.pipeline().remove(FrameEncoder.class);
                     ctx.pipeline().remove(PackageDecoder.class);
                     ctx.pipeline().remove(PackageEncoder.class);
+                    ctx.pipeline().remove(this);
+                    ctx.pipeline().remove(ProxyServerHandler.class);
                     ctx.pipeline().addLast(dataForwardHander);
+                    
                 }
             };
             holder.t = listener;
