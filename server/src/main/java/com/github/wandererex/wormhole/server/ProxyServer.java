@@ -20,6 +20,7 @@ import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.util.Attribute;
 import io.netty.util.AttributeKey;
+import lombok.Getter;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -40,11 +41,15 @@ public class ProxyServer {
 
     private ForwardHandler forwardHandler;
 
-    public ProxyServer(String serviceKey, Integer mappingPort, Channel proxyChannel) {
+    @Getter
+    private Server server;
+
+    public ProxyServer(String serviceKey, Integer mappingPort, Channel proxyChannel,  Server server) {
         this.serviceKey = serviceKey;
         this.mappingPort = mappingPort;
         this.proxyChannel = proxyChannel;
-        this.forwardHandler = new ForwardHandler(serviceKey, proxyChannel);
+        this.forwardHandler = new ForwardHandler(serviceKey, proxyChannel, this);
+        this.server = server;
     }
 
     public void send(Frame msg) {
@@ -54,7 +59,7 @@ public class ProxyServer {
     public void open() {
         EventLoopGroup boss = new NioEventLoopGroup();
         EventLoopGroup worker = new NioEventLoopGroup();
-        ServerBootstrap bootstrap = new ServerBootstrap();
+        ServerBootstrap bootstrap = new ServerBootstrap(); 
 
         bootstrap.group(boss, worker)
                 .channel(NioServerSocketChannel.class)
@@ -115,6 +120,7 @@ public class ProxyServer {
 
     public void closeChannel(Frame msg) {
         forwardHandler.closeChannel(msg);
+        forwardHandler.cleanDataChannel(msg.getRealClientAddress());
         forwardHandler.removeLatch(msg.getRealClientAddress());
     }
 

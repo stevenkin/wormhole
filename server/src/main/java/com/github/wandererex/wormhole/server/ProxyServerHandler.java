@@ -29,6 +29,12 @@ import java.util.concurrent.Semaphore;
 public class ProxyServerHandler extends SimpleChannelInboundHandler<Frame> {
     private Map<String, ProxyServer> proxyServerMap = new HashMap<>();
 
+    private Server server;
+
+    public ProxyServerHandler(Server server) {
+        this.server = server;
+    }
+
     public ProxyServer getProxyServer(String serviceKey) {
         return proxyServerMap.get(serviceKey);
     }
@@ -123,7 +129,7 @@ public class ProxyServerHandler extends SimpleChannelInboundHandler<Frame> {
     private void buildForwardServer(ProxyServiceConfig config, Channel channel) {
         Map<String, ProxyServiceConfig.ServiceConfig> serviceConfigMap = config.getServiceConfigMap();
         for (Map.Entry<String, ProxyServiceConfig.ServiceConfig> config1 : serviceConfigMap.entrySet()) {
-            ProxyServer proxyServer = new ProxyServer(config1.getKey(), config1.getValue().getMappingPort(), channel);
+            ProxyServer proxyServer = new ProxyServer(config1.getKey(), config1.getValue().getMappingPort(), channel, server);
             proxyServerMap.put(config1.getKey(), proxyServer);
             proxyServer.open();
             log.info("port mapping open {} {} {}", config1.getKey(), config1.getValue().getPort(), config1.getValue().getMappingPort());

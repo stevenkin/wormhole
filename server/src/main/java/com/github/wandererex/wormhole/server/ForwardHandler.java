@@ -38,6 +38,8 @@ public class ForwardHandler extends ChannelInboundHandlerAdapter {
     private String serviceKey;
     private Channel proxyChannel;
 
+    private ProxyServer proxyServer;
+
     private Map<String, Channel> channelMap = new ConcurrentHashMap<>();
 
      private Map<String, Channel> dataChannelMap = new ConcurrentHashMap<>();
@@ -47,9 +49,10 @@ public class ForwardHandler extends ChannelInboundHandlerAdapter {
      private Map<String, CountDownLatch> lMap = new ConcurrentHashMap<>();
 
 
-    public ForwardHandler(String serviceKey, Channel proxyChannel) {
+    public ForwardHandler(String serviceKey, Channel proxyChannel, ProxyServer proxyServer) {
         this.serviceKey = serviceKey;
         this.proxyChannel = proxyChannel;
+        this.proxyServer = proxyServer;
     }
 
     public void setChannel(String client, Channel channel) {
@@ -76,6 +79,12 @@ public class ForwardHandler extends ChannelInboundHandlerAdapter {
         Channel remove = dataChannelMap.remove(client);
         if (remove != null) {
             cMap.remove(remove);
+            remove.pipeline().addLast(new FrameDecoder());
+            remove.pipeline().addLast(new FrameEncoder());
+            remove.pipeline().addLast(new PackageDecoder());
+            remove.pipeline().addLast(new PackageEncoder());
+            remove.pipeline().addLast(proxyServer.getServer().getProxyServerHandler());
+            remove.pipeline().addLast(proxyServer.getServer().getCommandHander());
         }
     }
 

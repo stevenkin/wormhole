@@ -14,6 +14,7 @@ import io.netty.handler.logging.LoggingHandler;
 import io.netty.util.Attribute;
 import io.netty.util.AttributeKey;
 import io.netty.util.concurrent.GenericFutureListener;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.InetSocketAddress;
@@ -45,8 +46,10 @@ public class DataClient {
 
     private boolean isTaked;
 
+    @Getter
     private Map<String, ChannelPromise> reqMap = new ConcurrentHashMap<>();
 
+    @Getter
     private DataClientHandler dataClientHandler = new DataClientHandler();
 
     private ProxyClient proxyClient;
@@ -66,27 +69,7 @@ public class DataClient {
                             ch.pipeline().addLast(new FrameEncoder());
                             ch.pipeline().addLast(new PackageDecoder());
                             ch.pipeline().addLast(new PackageEncoder());
-                            ch.pipeline().addLast(new SimpleChannelInboundHandler<Frame>() {
-
-                                @Override
-                                protected void channelRead0(ChannelHandlerContext ctx, Frame msg) throws Exception {
-                                    if (msg.getOpCode() == 0xD1) {
-                                        ByteBuf payload = msg.getPayload();
-                                        String string = payload.readCharSequence(payload.readableBytes(), Charset.forName("UTF-8")).toString();
-                                        if (reqMap.containsKey(string)) {
-                                            ChannelPromise channelPromise = reqMap.get(string);
-                                            ctx.pipeline().remove(FrameDecoder.class);
-                                            ctx.pipeline().remove(FrameEncoder.class);
-                                            ctx.pipeline().remove(PackageDecoder.class);
-                                            ctx.pipeline().remove(PackageEncoder.class);
-                                            ctx.pipeline().remove(this);
-                                            ctx.pipeline().addLast(dataClientHandler);
-                                            channelPromise.setSuccess();
-                                        }
-                                    }
-                                }
-                                
-                            });
+                            ch.pipeline().addLast(new DataClientCmdHandler(DataClient.this));
                         }
                     });
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
@@ -114,7 +97,12 @@ public class DataClient {
         Attribute<Boolean> attr = channel.attr(attributeKey);
         attr.set(false);
         proxyClient = null;
-
+        Channel ch  = channel;
+        ch.pipeline().addLast(new FrameDecoder());
+        ch.pipeline().addLast(new FrameEncoder());
+        ch.pipeline().addLast(new PackageDecoder());
+        ch.pipeline().addLast(new PackageEncoder());
+        ch.pipeline().addLast(new DataClientCmdHandler(DataClient.this));
         return true;
     }
 

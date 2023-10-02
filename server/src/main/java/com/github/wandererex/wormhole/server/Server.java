@@ -10,6 +10,7 @@ import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.handler.timeout.ReadTimeoutHandler;
+import lombok.Getter;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -18,15 +19,17 @@ public class Server {
 
     private DataForwardHander dataForwardHander;
 
+    @Getter
     private CommandHander commandHander;
 
     private ChannelFuture channelFuture;
 
+    @Getter
     private ProxyServerHandler proxyServerHandler;
 
     public Server(int port) {
         this.port = port;
-        this.proxyServerHandler = new ProxyServerHandler();
+        this.proxyServerHandler = new ProxyServerHandler(this);
         this.dataForwardHander = new DataForwardHander(proxyServerHandler);
         this.commandHander = new CommandHander(dataForwardHander);
     }
