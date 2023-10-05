@@ -124,6 +124,15 @@ public class ProxyServerHandler extends SimpleChannelInboundHandler<Frame> {
             log.info("oxD {}", msg);
             ctx.fireChannelRead(msg);
         }
+        if (msg.getOpCode() == 0xC) {
+            log.info("oxC {}", msg);
+            ProxyServer proxyServer = proxyServerMap.get(msg.getServiceKey());
+            if (proxyServer != null) {
+                proxyServer.getForwardHandler().cleanDataChannel(msg.getRealClientAddress());
+                Frame frame = new Frame(0xC1, msg.getServiceKey(), msg.getRealClientAddress(), null);
+                write(frame, ctx.channel());
+            }
+        }
     }
 
     private void buildForwardServer(ProxyServiceConfig config, Channel channel) {
@@ -134,5 +143,16 @@ public class ProxyServerHandler extends SimpleChannelInboundHandler<Frame> {
             proxyServer.open();
             log.info("port mapping open {} {} {}", config1.getKey(), config1.getValue().getPort(), config1.getValue().getMappingPort());
         }
+    }
+
+    private void write(Frame frame, Channel channel) {
+            Holder<GenericFutureListener> holder = new Holder<>();
+            GenericFutureListener listener = f -> {
+                if (!f.isSuccess()) {
+                    channel.writeAndFlush(frame).addListener(holder.t);
+                }
+            };
+            holder.t = listener;
+            channel.writeAndFlush(frame).addListener(holder.t);
     }
 }

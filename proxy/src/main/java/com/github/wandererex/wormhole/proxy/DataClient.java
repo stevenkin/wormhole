@@ -15,6 +15,7 @@ import io.netty.util.Attribute;
 import io.netty.util.AttributeKey;
 import io.netty.util.concurrent.GenericFutureListener;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.InetSocketAddress;
@@ -29,6 +30,9 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import org.apache.commons.lang3.RandomStringUtils;
 
 @Slf4j
 public class DataClient {
@@ -42,6 +46,8 @@ public class DataClient {
 
     private Channel channel;
 
+    private Channel channel2;
+
     private long lastHeatbeatTime;
 
     private boolean isTaked;
@@ -54,7 +60,14 @@ public class DataClient {
 
     private ProxyClient proxyClient;
 
-    public DataClient() {
+    private AttributeKey<AtomicBoolean> attributeKey = AttributeKey.valueOf("isTaked");
+
+    @Setter
+    @Getter
+    private ChannelPromise channelPromise;
+
+    public DataClient(Channel proxyServerChannel) {
+        this.channel2 = proxyServerChannel;
         this.clientBootstrap = new Bootstrap();
         this.clientGroup = new NioEventLoopGroup();
         clientBootstrap.group(clientGroup).channel(NioSocketChannel.class)
@@ -71,6 +84,10 @@ public class DataClient {
                             ch.pipeline().addLast(new PackageEncoder());
                             ch.pipeline().addLast(new DataClientCmdHandler(DataClient.this));
                             ch.pipeline().addLast(new LoggingHandler());
+                            Attribute<AtomicBoolean> attr = ch.attr(attributeKey);
+                            if (attr.get() == null) {
+                                attr.set(new AtomicBoolean(false));
+                            }
                         }
                     });
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
@@ -78,28 +95,65 @@ public class DataClient {
         }));
     }
 
-    public synchronized boolean take() {
+    public synchronized ChannelPromise take(String serviceKey, String address) {
         if (isTaked) {
-            return false;
+            throw new RuntimeException("dataclient is taked");
         }
+        Attribute<AtomicBoolean> attr = channel.attr(attributeKey);
+        if (attr.get() != null) {
+            attr.get().set(isTaked);
+        }
+        Frame frame = new Frame(0xD, serviceKey, address, null);
+        String key = System.currentTimeMillis() + RandomStringUtils.randomAlphabetic(8);
+        ByteBuf buffer = PooledByteBufAllocator.DEFAULT.buffer();
+        buffer.writeCharSequence(key, Charset.forName("UTF-8"));
+        frame.setPayload(buffer);
+        ChannelPromise send = send(frame, channel);
+        send.addListener(f -> {
+            if (f.isSuccess()) {
+                synchronized(DataClient.this) {
+                    channel.pipeline().remove(FrameDecoder.class);
+                    channel.pipeline().remove(FrameEncoder.class);
+                    channel.pipeline().remove(PackageDecoder.class);
+                    channel.pipeline().remove(PackageEncoder.class);
+                    channel.pipeline().remove(DataClientCmdHandler.class);
+                    channel.pipeline().remove(LoggingHandler.class);
+                    channel.pipeline().addLast(dataClientHandler);
+                    channel.pipeline().addLast(new LoggingHandler());
+                }
+            }
+        });
         isTaked = true;
-        return true;
+        return send;
     }
 
-    public synchronized boolean revert() {
+    public synchronized ChannelPromise revert(String serviceKey, String address) {
         if (!isTaked) {
-            return false;
+            throw new RuntimeException("dataclient is not taked");
         }
-        isTaked = false;
         proxyClient = null;
-        Channel ch  = channel;
-        ch.pipeline().remove(DataClientHandler.class);
-        ch.pipeline().addLast(new FrameDecoder());
-        ch.pipeline().addLast(new FrameEncoder());
-        ch.pipeline().addLast(new PackageDecoder());
-        ch.pipeline().addLast(new PackageEncoder());
-        ch.pipeline().addLast(new DataClientCmdHandler(this));
-        return true;
+        Frame frame = new Frame(0xC, serviceKey, address, null);
+        String key = System.currentTimeMillis() + RandomStringUtils.randomAlphabetic(8);
+        ByteBuf buffer = PooledByteBufAllocator.DEFAULT.buffer();
+        buffer.writeCharSequence(key, Charset.forName("UTF-8"));
+        frame.setPayload(buffer);
+        ChannelPromise send = send(frame, channel2);
+        send.addListener(f -> {
+            if (f.isSuccess()) {
+                synchronized(DataClient.this) {
+                    channel.pipeline().remove(DataClientHandler.class);
+                    channel.pipeline().remove(LoggingHandler.class);
+                    channel.pipeline().addLast(new FrameDecoder());
+                    channel.pipeline().addLast(new FrameEncoder());
+                    channel.pipeline().addLast(new PackageDecoder());
+                    channel.pipeline().addLast(new PackageEncoder());
+                    channel.pipeline().addLast(new DataClientCmdHandler(DataClient.this));
+                    channel.pipeline().addLast(new LoggingHandler());
+                }
+            }
+        });
+        isTaked = false;
+        return send;
     }
 
     public void init(String serviceKey, String client) {
@@ -149,7 +203,7 @@ public class DataClient {
         connect(ip, port);
     }
 
-    public ChannelPromise send(Frame frame) throws Exception {
+    public ChannelPromise send(Frame frame, Channel channel2) {
         ByteBuf payload = frame.getPayload();
         int opCode = frame.getOpCode();
         String string = null;
@@ -160,15 +214,17 @@ public class DataClient {
             Holder<GenericFutureListener> holder = new Holder<>();
             GenericFutureListener listener = f1 -> {
                 if (!f1.isSuccess()) {
-                    channel.writeAndFlush(frame).addListener(holder.t);;
+                    ChannelPipeline pipeline = channel2.pipeline();
+                    pipeline.forEach(e -> log.info("{} -> {}", e.getKey(), e.getValue()));
+                    channel2.writeAndFlush(frame).addListener(holder.t);;
                 }
             };
             holder.t = listener;
-            ChannelPromise newPromise = channel.newPromise();
+            ChannelPromise newPromise = channel2.newPromise();
             if (string != null) {
                 reqMap.put(string, newPromise);
             }
-            channel.writeAndFlush(frame).addListener(holder.t);
+            channel2.writeAndFlush(frame).addListener(holder.t);
             return newPromise;
         }
         throw new UnsupportedOperationException();

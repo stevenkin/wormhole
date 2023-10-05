@@ -23,12 +23,6 @@ public class DataClientCmdHandler extends SimpleChannelInboundHandler<Frame> {
                     String string = payload.readCharSequence(payload.readableBytes(), Charset.forName("UTF-8")).toString();
                     if (dataClient.getReqMap().containsKey(string)) {
                         ChannelPromise channelPromise = dataClient.getReqMap().get(string);
-                        ctx.pipeline().remove(FrameDecoder.class);
-                        ctx.pipeline().remove(FrameEncoder.class);
-                        ctx.pipeline().remove(PackageDecoder.class);
-                        ctx.pipeline().remove(PackageEncoder.class);
-                        ctx.pipeline().remove(this);
-                        ctx.pipeline().addLast(dataClient.getDataClientHandler());
                         channelPromise.setSuccess();
                     }
             }

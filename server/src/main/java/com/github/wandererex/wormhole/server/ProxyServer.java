@@ -122,7 +122,6 @@ public class ProxyServer {
 
     public void closeChannel(Frame msg) {
         forwardHandler.closeChannel(msg);
-        forwardHandler.cleanDataChannel(msg.getRealClientAddress());
         forwardHandler.removeLatch(msg.getRealClientAddress());
     }
 

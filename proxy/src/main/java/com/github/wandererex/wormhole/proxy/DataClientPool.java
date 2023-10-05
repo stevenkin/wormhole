@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelPromise;
+import lombok.Setter;
 
 public class DataClientPool {
     private int index = 0;
@@ -15,14 +17,17 @@ public class DataClientPool {
 
     private Integer dataPort;
 
+    private Channel channel;
+
     
 
-    public DataClientPool(String ip, Integer dataPort) {
+    public DataClientPool(String ip, Integer dataPort, Channel channel) {
         this.ip = ip;
         this.dataPort = dataPort;
+        this.channel = channel;
     }
 
-    public synchronized DataClient getClient() throws Exception {
+    public synchronized DataClient getClient(String serviceKey, String address) throws Exception {
         int i = index;
         boolean f = false;
         DataClient dataClient = null;
@@ -37,15 +42,19 @@ public class DataClientPool {
                 if (index >= list.size()) {
                     index = 0;
                 }
-                boolean take = dataClient.take();
-                if (take) {
+                try {
+                    ChannelPromise take = dataClient.take(serviceKey, address);
+                    dataClient.setChannelPromise(take);
                     return dataClient;
+                } catch (Exception e) {
+
                 }
             }
         }
-        dataClient = new DataClient();
+        dataClient = new DataClient(channel);
         dataClient.connect(ip, dataPort);
-        dataClient.take();
+        ChannelPromise take = dataClient.take(serviceKey, address);
+        dataClient.setChannelPromise(take);
         list.add(dataClient);
         return dataClient;
     }

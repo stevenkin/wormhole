@@ -63,7 +63,6 @@ public class ProxyClient {
     public ProxyClient(ProxyServiceConfig config) {
         this.clientBootstrap = new Bootstrap();
         this.clientGroup = new NioEventLoopGroup();
-        proxyHandler =  new ProxyHandler(ProxyClient.this, config);
         if (config == null) {
             clientBootstrap.group(clientGroup).channel(NioSocketChannel.class)
                     .option(ChannelOption.TCP_NODELAY, true)
@@ -79,7 +78,7 @@ public class ProxyClient {
                                     channel1.writeAndFlush(frame);
                                     ctx.fireChannelInactive();
                                     if (dataClient != null) {
-                                        dataClient.revert();
+                                        dataClient.revert(serviceKey, realAddress);
                                     }
                                 }
                                 @Override
@@ -95,6 +94,7 @@ public class ProxyClient {
                     });
         }
         else {
+            this.proxyHandler =  new ProxyHandler(ProxyClient.this, config);
             clientBootstrap.group(clientGroup).channel(NioSocketChannel.class)
                     .option(ChannelOption.TCP_NODELAY, true)
                     .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000)

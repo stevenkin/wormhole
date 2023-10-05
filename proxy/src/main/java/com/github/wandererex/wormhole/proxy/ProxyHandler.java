@@ -44,9 +44,6 @@ public class ProxyHandler extends SimpleChannelInboundHandler<Frame> {
     public ProxyHandler(ProxyClient proxyClient, ProxyServiceConfig config) {
         this.config = config;
         this.proxyClient = proxyClient;
-        if (config != null) {
-            this.dataClientPool = new DataClientPool(config.getServerHost(), config.getServerPort());
-        }
     }
 
     @Override
@@ -69,27 +66,16 @@ public class ProxyHandler extends SimpleChannelInboundHandler<Frame> {
                 Channel channel = proxyClient.connect(serviceConfig.getIp(), serviceConfig.getPort());
                 map.put(address, channel);
                 
-                DataClient client = dataClientPool.getClient();
-                dataChannelMap.put(address, client);
-                proxyClient.setDataClient(client);
-                client.setProxyClient(proxyClient);
-
-                Frame frame = new Frame(0xD, serviceKey, address, null);
-                String key = System.currentTimeMillis() + RandomStringUtils.randomAlphabetic(8);
-                ByteBuf buffer = PooledByteBufAllocator.DEFAULT.buffer();
-                buffer.writeCharSequence(key, Charset.forName("UTF-8"));
-                frame.setPayload(buffer);
-                ChannelPromise send = client.send(frame);
-                send.addListener(f -> {
-                    Frame frame1 = new Frame(0x91, serviceKey, address, null);
-                    Holder<GenericFutureListener> holder = new Holder<>();
-                    GenericFutureListener listener = f1 -> {
-                        if (!f1.isSuccess()) {
-                            ctx.writeAndFlush(frame1).addListener(holder.t);
-                        }
-                    };
-                    holder.t = listener;
-                    ctx.writeAndFlush(frame1).addListener(holder.t);
+                if (config != null && dataClientPool == null) {
+                    this.dataClientPool = new DataClientPool(config.getServerHost(), config.getServerPort(), ctx.channel());
+                }
+                DataClient client = dataClientPool.getClient(serviceKey, address);
+                client.getChannelPromise().addListener(f -> {
+                    if (f.isSuccess()) {
+                        dataChannelMap.put(address, client);
+                        proxyClient.setDataClient(client);
+                        client.setProxyClient(proxyClient);
+                    }
                 });
             } catch (Exception e) {
                 Frame frame = new Frame(0x90, serviceKey,  localAddress.toString(), null);
@@ -155,7 +141,16 @@ public class ProxyHandler extends SimpleChannelInboundHandler<Frame> {
             }
             DataClient dataClient = dataChannelMap.get(address);
             if (dataClient != null) {
-                dataClient.revert();
+                dataClient.revert(serviceKey, address);
+            }
+        } else if (opCode == 0xC1) {
+            log.info("data client revert");
+            DataClient dataClient = dataChannelMap.get(address);
+            if (dataClient != null) {
+                ChannelPromise channelPromise = dataClient.getReqMap().get(address);
+                if (channelPromise != null) {
+                    channelPromise.setSuccess();
+                }
             }
         }
     }
