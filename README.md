@@ -45,4 +45,6 @@ java -jar proxy-1.0.0-SNAPSHOT-jar-with-dependencies.jar --serverHost 127.0.0.1 
 
 ### 性能测试
 ![这是图片](./20230914140636.png "这是图片")
+优化了一点，目前wrk测试
+![这是图片](./WechatIMG1040.png "这是图片")
 
