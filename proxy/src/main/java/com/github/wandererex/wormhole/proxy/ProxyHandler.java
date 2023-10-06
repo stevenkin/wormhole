@@ -75,6 +75,8 @@ public class ProxyHandler extends SimpleChannelInboundHandler<Frame> {
                         dataChannelMap.put(address, client);
                         proxyClient.setDataClient(client);
                         client.setProxyClient(proxyClient);
+                        Frame frame = new Frame(0x91, serviceKey, address, null);
+                        write(frame, ctx.channel());
                     }
                 });
             } catch (Exception e) {
@@ -146,8 +148,9 @@ public class ProxyHandler extends SimpleChannelInboundHandler<Frame> {
         } else if (opCode == 0xC1) {
             log.info("data client revert");
             DataClient dataClient = dataChannelMap.get(address);
+            CharSequence readCharSequence = payload.readCharSequence(payload.readableBytes(), Charset.forName("UTF-8"));
             if (dataClient != null) {
-                ChannelPromise channelPromise = dataClient.getReqMap().get(address);
+                ChannelPromise channelPromise = dataClient.getReqMap().get(readCharSequence.toString());
                 if (channelPromise != null) {
                     channelPromise.setSuccess();
                 }
@@ -161,4 +164,15 @@ public class ProxyHandler extends SimpleChannelInboundHandler<Frame> {
             channel.close();
         }
     }
+
+    private void write(Frame frame, Channel channel) {
+        Holder<GenericFutureListener> holder = new Holder<>();
+        GenericFutureListener listener = f -> {
+            if (!f.isSuccess()) {
+                channel.writeAndFlush(frame).addListener(holder.t);
+            }
+        };
+        holder.t = listener;
+        channel.writeAndFlush(frame).addListener(holder.t);
+}
 }

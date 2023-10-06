@@ -129,7 +129,7 @@ public class ProxyServerHandler extends SimpleChannelInboundHandler<Frame> {
             ProxyServer proxyServer = proxyServerMap.get(msg.getServiceKey());
             if (proxyServer != null) {
                 proxyServer.getForwardHandler().cleanDataChannel(msg.getRealClientAddress());
-                Frame frame = new Frame(0xC1, msg.getServiceKey(), msg.getRealClientAddress(), null);
+                Frame frame = new Frame(0xC1, msg.getServiceKey(), msg.getRealClientAddress(), msg.getPayload());
                 write(frame, ctx.channel());
             }
         }

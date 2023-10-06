@@ -60,8 +60,6 @@ public class DataClient {
 
     private ProxyClient proxyClient;
 
-    private AttributeKey<AtomicBoolean> attributeKey = AttributeKey.valueOf("isTaked");
-
     @Setter
     @Getter
     private ChannelPromise channelPromise;
@@ -84,10 +82,6 @@ public class DataClient {
                             ch.pipeline().addLast(new PackageEncoder());
                             ch.pipeline().addLast(new DataClientCmdHandler(DataClient.this));
                             ch.pipeline().addLast(new LoggingHandler());
-                            Attribute<AtomicBoolean> attr = ch.attr(attributeKey);
-                            if (attr.get() == null) {
-                                attr.set(new AtomicBoolean(false));
-                            }
                         }
                     });
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
@@ -99,15 +93,7 @@ public class DataClient {
         if (isTaked) {
             throw new RuntimeException("dataclient is taked");
         }
-        Attribute<AtomicBoolean> attr = channel.attr(attributeKey);
-        if (attr.get() != null) {
-            attr.get().set(isTaked);
-        }
         Frame frame = new Frame(0xD, serviceKey, address, null);
-        String key = System.currentTimeMillis() + RandomStringUtils.randomAlphabetic(8);
-        ByteBuf buffer = PooledByteBufAllocator.DEFAULT.buffer();
-        buffer.writeCharSequence(key, Charset.forName("UTF-8"));
-        frame.setPayload(buffer);
         ChannelPromise send = send(frame, channel);
         send.addListener(f -> {
             if (f.isSuccess()) {
@@ -129,14 +115,10 @@ public class DataClient {
 
     public synchronized ChannelPromise revert(String serviceKey, String address) {
         if (!isTaked) {
-            throw new RuntimeException("dataclient is not taked");
+            return channel2.newPromise().setFailure(new RuntimeException("dataclient is not taked"));
         }
         proxyClient = null;
         Frame frame = new Frame(0xC, serviceKey, address, null);
-        String key = System.currentTimeMillis() + RandomStringUtils.randomAlphabetic(8);
-        ByteBuf buffer = PooledByteBufAllocator.DEFAULT.buffer();
-        buffer.writeCharSequence(key, Charset.forName("UTF-8"));
-        frame.setPayload(buffer);
         ChannelPromise send = send(frame, channel2);
         send.addListener(f -> {
             if (f.isSuccess()) {
@@ -170,9 +152,6 @@ public class DataClient {
          * 最多尝试5次和服务端连接
          */
         this.channel = doConnect(ip, port, 5);
-        AttributeKey<Boolean> attributeKey = AttributeKey.valueOf("isTaked");
-        Attribute<Boolean> attr = channel.attr(attributeKey);
-        attr.set(false);
         this.ip = ip;
         this.port = port;
         return channel;
@@ -204,13 +183,13 @@ public class DataClient {
     }
 
     public ChannelPromise send(Frame frame, Channel channel2) {
+        String key = System.currentTimeMillis() + RandomStringUtils.randomAlphabetic(8);
+        ByteBuf buffer = PooledByteBufAllocator.DEFAULT.buffer();
+        buffer.writeCharSequence(key, Charset.forName("UTF-8"));
+        frame.setPayload(buffer);
         ByteBuf payload = frame.getPayload();
-        int opCode = frame.getOpCode();
-        String string = null;
-        if (opCode == 0xD) {
-            payload.markReaderIndex();
-            string = payload.readCharSequence(payload.readableBytes(), Charset.forName("UTF-8")).toString();
-            payload.resetReaderIndex();
+        String string = key;
+        payload.markReaderIndex();
             Holder<GenericFutureListener> holder = new Holder<>();
             GenericFutureListener listener = f1 -> {
                 if (!f1.isSuccess()) {
@@ -226,13 +205,16 @@ public class DataClient {
             }
             channel2.writeAndFlush(frame).addListener(holder.t);
             return newPromise;
-        }
-        throw new UnsupportedOperationException();
     }
 
     public ChannelPromise send(ByteBuf byteBuf) {
+        if (channelPromise == null) {
+            throw new UnsupportedOperationException();
+        }
         ChannelPromise newPromise = channel.newPromise();
-        channel.writeAndFlush(byteBuf, newPromise);
+        channelPromise.addListener(f -> {
+            channel.writeAndFlush(byteBuf, newPromise);
+        });
         return newPromise;
     }
 
