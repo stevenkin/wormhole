@@ -215,7 +215,7 @@ public class ProxyClient {
         HashSet<String> hashSet = new HashSet<>(map.keySet());
         Map<String, ServiceConfig> map1 = new HashMap<>();
         hashSet.forEach(k -> {
-            map1.put(k + string, map.remove(k));
+            map1.put(k + "-" + string, map.remove(k));
         });
         config.setMap(map1);
         channelPromise.setSuccess();

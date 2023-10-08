@@ -57,7 +57,9 @@ public class CommandHander extends SimpleChannelInboundHandler<Frame>{
             };
             holder.t = listener;
             ctx.writeAndFlush(frame).addListener(holder.t);
+            return;
         }
+        ctx.fireChannelRead(msg);
     }
 
 }
