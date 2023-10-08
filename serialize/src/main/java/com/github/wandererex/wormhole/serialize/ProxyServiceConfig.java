@@ -20,6 +20,10 @@ public class ProxyServiceConfig {
 
     private Integer serverPort;
 
+    private String username;
+
+    private String password;
+
     public  ServiceConfig getServiceConfig(String serviceKey) {
         return map.get(serviceKey);
     }

@@ -27,11 +27,14 @@ public class Server {
     @Getter
     private ProxyServerHandler proxyServerHandler;
 
-    public Server(int port) {
+    private AuthHandler authHandler;
+
+    public Server(int port, String redisIp, Integer redisPort) {
         this.port = port;
         this.proxyServerHandler = new ProxyServerHandler(this);
         this.dataForwardHander = new DataForwardHander(proxyServerHandler);
         this.commandHander = new CommandHander(dataForwardHander);
+        this.authHandler = new AuthHandler(redisIp, redisPort);
     }
 
     public void open() {
@@ -51,6 +54,7 @@ public class Server {
                         pipeline.addLast(new PackageEncoder());
                         pipeline.addLast(proxyServerHandler);
                         pipeline.addLast(commandHander);
+                        pipeline.addLast(authHandler);
                         pipeline.addLast(new LoggingHandler());
                     }
                 });
@@ -81,6 +85,8 @@ public class Server {
 
     public static void main(String[] args) {
         String port = null;
+        String redisIp = null;
+        Integer redisPort = null;
         if (args != null && args.length > 0) {
             for (int i = 0; i < args.length; i++) {
                 if (StringUtils.isNotEmpty(args[i]) && args[i].equals("--port")) {
@@ -90,10 +96,24 @@ public class Server {
                             port = arg;
                         }
                     }
+                } else if (StringUtils.isNotEmpty(args[i]) && args[i].equals("--redisIp")) {
+                    if (i + 1 < args.length) {
+                        String arg = args[i + 1];
+                        if (StringUtils.isNotEmpty(arg)) {
+                            redisIp = arg;
+                        }
+                    }
+                } else if (StringUtils.isNotEmpty(args[i]) && args[i].equals("--redisPort")) {
+                    if (i + 1 < args.length) {
+                        String arg = args[i + 1];
+                        if (StringUtils.isNotEmpty(arg)) {
+                            redisPort = Integer.parseInt(arg);
+                        }
+                    }
                 }
             }
-            if (port != null) {
-                new Server(Integer.parseInt(port)).open();
+            if (port != null  && redisPort != null && StringUtils.isNotEmpty(redisIp)) {
+                new Server(Integer.parseInt(port), redisIp, redisPort).open();
             }
         }
     }

@@ -133,6 +133,9 @@ public class ProxyServerHandler extends SimpleChannelInboundHandler<Frame> {
                 write(frame, ctx.channel());
             }
         }
+        if (msg.getOpCode() == 0x0) {
+            ctx.fireChannelRead(msg);
+        }
     }
 
     private void buildForwardServer(ProxyServiceConfig config, Channel channel) {

@@ -1,8 +1,12 @@
 package com.github.wandererex.wormhole.proxy;
 
+import com.alibaba.fastjson.JSONObject;
 import com.github.wandererex.wormhole.serialize.*;
+import com.github.wandererex.wormhole.serialize.ProxyServiceConfig.ServiceConfig;
+
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
@@ -19,8 +23,12 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
@@ -60,9 +68,12 @@ public class ProxyClient {
 
     private DataClient dataClient;
 
+    private ProxyServiceConfig config;
+
     public ProxyClient(ProxyServiceConfig config) {
         this.clientBootstrap = new Bootstrap();
         this.clientGroup = new NioEventLoopGroup();
+        this.config = config;
         if (config == null) {
             clientBootstrap.group(clientGroup).channel(NioSocketChannel.class)
                     .option(ChannelOption.TCP_NODELAY, true)
@@ -196,9 +207,29 @@ public class ProxyClient {
         channel.writeAndFlush(byteBuf);
     }
 
-    public void authSuccess() {
+    public void authSuccess(Frame msg) {
         this.authSuccess = true;
+        ByteBuf payload = msg.getPayload();
+        String string = payload.readCharSequence(payload.readableBytes(), Charset.forName("UTF-8")).toString();
+        Map<String, ServiceConfig> map = config.getMap();
+        HashSet<String> hashSet = new HashSet<>(map.keySet());
+        Map<String, ServiceConfig> map1 = new HashMap<>();
+        hashSet.forEach(k -> {
+            map1.put(k + string, map.remove(k));
+        });
+        config.setMap(map1);
         channelPromise.setSuccess();
+    }
+
+    public void authFail() {
+        this.authSuccess = false;
+        channelPromise.setFailure(new RuntimeException("proxy client auth fail"));
+        try {
+            shutdown();
+        } catch (Exception e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
     }
 
     public void shutdown() throws Exception {
@@ -236,7 +267,19 @@ public class ProxyClient {
         }, 15, 15, TimeUnit.SECONDS);
     }
 
-    public void syncAuth() throws InterruptedException {
+    public void syncAuth() throws Exception {
+        if (config == null) {
+            shutdown();
+            return;
+        }
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("username", config.getUsername());
+        jsonObject.put("password", config.getPassword());
+        String jsonString = jsonObject.toJSONString();
+        ByteBuf buffer = PooledByteBufAllocator.DEFAULT.buffer();
+        buffer.writeCharSequence(jsonString, Charset.forName("UTF-8"));
+        Frame frame = new Frame(0x0, null, null, buffer);
+        channel.writeAndFlush(frame);
         channelPromise.sync();
     }
 

@@ -39,8 +39,8 @@ public class Proxy {
 
     public void start() throws Exception {
         channel = client.connect(serverHost, serverPort);
-        online(channel);
         client.syncAuth();
+        online(channel);
         client.checkIdle();
         latch.await();
     }

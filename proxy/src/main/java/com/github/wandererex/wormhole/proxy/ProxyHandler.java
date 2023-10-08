@@ -122,7 +122,6 @@ public class ProxyHandler extends SimpleChannelInboundHandler<Frame> {
             close();
         } else if (opCode == 0x11) {
             log.info("proxy connect server success");
-            proxyClient.authSuccess();
         } else if (opCode == 0x6) {
             log.info("proxy update heatbeat time");
         } else if (opCode == 0x81) {
@@ -155,7 +154,13 @@ public class ProxyHandler extends SimpleChannelInboundHandler<Frame> {
                     channelPromise.setSuccess();
                 }
             }
-        }
+        } else if (opCode == 0x01) {
+            log.info("proxy client auth success");
+            proxyClient.authSuccess(msg);
+        } else if (opCode == 0x00) {
+            log.info("proxy client auth fail");
+            proxyClient.authFail();
+        } 
     }
 
     private void close() throws Exception {
