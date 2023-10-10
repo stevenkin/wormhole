@@ -130,8 +130,10 @@ public class ProxyServer {
 
     public void shutdown() throws Exception {
         close();
-        boss.shutdownGracefully().syncUninterruptibly();
-        worker.shutdownGracefully().syncUninterruptibly();
+        if (boss != null && worker != null) {
+            boss.shutdownGracefully().syncUninterruptibly();
+            worker.shutdownGracefully().syncUninterruptibly();
+        }
     }
 
     public ForwardHandler getForwardHandler() {
