@@ -4,7 +4,7 @@
     "port": "8080",
     "mappingPort": "19000"
   },
-  "serverHost": "81.68.146.28",
+  "serverHost": "127.0.0.1",
   "serverPort": 9000,
   "username":"wjg",
   "password": "123456"

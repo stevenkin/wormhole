@@ -126,9 +126,6 @@ public class ProxyServer {
     public void closeChannel(Frame msg) {
         boolean closeChannel = forwardHandler.closeChannel(msg);
         forwardHandler.removeLatch(msg.getRealClientAddress());
-        if (!closeChannel) {
-            server.removeProxyServer(serviceKey);
-        }
     }
 
     public void shutdown() throws Exception {
