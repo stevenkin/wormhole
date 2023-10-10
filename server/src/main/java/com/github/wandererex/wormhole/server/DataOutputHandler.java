@@ -5,7 +5,6 @@ import io.netty.channel.ChannelOutboundHandlerAdapter;
 import io.netty.channel.ChannelPromise;
 import io.netty.channel.ChannelHandler.Sharable;
 
-@Sharable
 public class DataOutputHandler extends ChannelOutboundHandlerAdapter {
     private ForwardHandler forwardHandler;
 

@@ -12,11 +12,13 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.ChannelHandler.Sharable;
+import lombok.Getter;
 
 @Sharable
 public class DataForwardHander extends ChannelInboundHandlerAdapter {
     private Map<Channel, String> channelMap = new ConcurrentHashMap<>();
 
+    @Getter
     private ProxyServerHandler proxyServerHandler;
 
     public DataForwardHander(ProxyServerHandler proxyServerHandler) {

@@ -52,6 +52,7 @@ public class CommandHander extends SimpleChannelInboundHandler<Frame>{
                     ctx.pipeline().remove(this);
                     ctx.pipeline().remove(ProxyServerHandler.class);
                     ctx.pipeline().addLast(dataForwardHander);
+                    ctx.pipeline().addLast(new DataOutputHandler(dataForwardHander.getProxyServerHandler().getProxyServer(serviceKey).getForwardHandler(), realClientAddress));
                     
                 }
             };
