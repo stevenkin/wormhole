@@ -93,9 +93,20 @@ public class ForwardHandler extends ChannelInboundHandlerAdapter {
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         log.info("收到请求{}", System.currentTimeMillis());
         String address = ((InetSocketAddress)(ctx.channel().remoteAddress())).toString();
-        Channel channel = dataChannelMap.get(address);
-        if (channel != null) {
-            channel.writeAndFlush(msg);
+        ChannelPromise channelPromise = pMap.get(address);
+        if (channelPromise != null) {
+                log.info("收到请求222{}", System.currentTimeMillis());
+                channelPromise.addListener(f -> {
+                    Channel channel = dataChannelMap.get(address);
+                    if (channel != null) {
+                        log.info("收到请求111{}", System.currentTimeMillis());
+           
+                        if (channelPromise != null) {
+                            log.info("收到请求222{}", System.currentTimeMillis());
+                            channel.writeAndFlush(msg);
+                        }
+                    }
+                });
         }
     }
 
