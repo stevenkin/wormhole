@@ -46,7 +46,7 @@ public class ForwardHandler extends ChannelInboundHandlerAdapter {
 
      private Map<Channel, Channel> cMap = new ConcurrentHashMap<>();
 
-     private Map<String, CountDownLatch> lMap = new ConcurrentHashMap<>();
+     private Map<String, ChannelPromise> pMap = new ConcurrentHashMap<>();
 
 
     public ForwardHandler(String serviceKey, Channel proxyChannel, ProxyServer proxyServer) {
@@ -93,12 +93,6 @@ public class ForwardHandler extends ChannelInboundHandlerAdapter {
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         log.info("收到请求{}", System.currentTimeMillis());
         String address = ((InetSocketAddress)(ctx.channel().remoteAddress())).toString();
-        CountDownLatch countDownLatch = lMap.get(address);
-        if (countDownLatch == null) {
-            ctx.close();
-            return;
-        }
-        countDownLatch.await();
         Channel channel = dataChannelMap.get(address);
         if (channel != null) {
             channel.writeAndFlush(msg);
@@ -148,18 +142,21 @@ public class ForwardHandler extends ChannelInboundHandlerAdapter {
         }
     }
 
-    public void pass(String realClientAddress) {
-        CountDownLatch countDownLatch = lMap.get(realClientAddress);
-        if (countDownLatch != null) {
-            countDownLatch.countDown();
-        }
+    public ChannelPromise pass(String realClientAddress) {
+        ChannelPromise channelPromise = pMap.get(realClientAddress);
+        channelPromise.setSuccess();
+        return channelPromise;
     }
 
-    public void buildLatch(String client) {
-        lMap.put(client, new CountDownLatch(1));
+    public void buildClientPromiss(String client, ChannelPromise promise) {
+        pMap.put(client, promise);
     }
 
-    public void removeLatch(String address) {
-        lMap.remove(address);
+    public ChannelPromise getClientPromiss(String client) {
+        return pMap.get(client);
+    }
+
+    public ChannelPromise removeClientPromiss(String client) {
+        return pMap.remove(client);
     }
 }

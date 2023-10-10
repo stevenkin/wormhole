@@ -78,7 +78,7 @@ public class ProxyServer {
                                 String address = ((InetSocketAddress)(ctx.channel().remoteAddress())).toString();
                                 forwardHandler.setChannel(address, ctx.channel());
                                 Frame frame = new Frame(0x9, serviceKey, address, null);
-                                forwardHandler.buildLatch(address);
+                                forwardHandler.buildClientPromiss(address, ctx.newPromise());
                                 proxyChannel.writeAndFlush(frame);
                             }
 
@@ -87,7 +87,6 @@ public class ProxyServer {
                                 String address = ((InetSocketAddress)(ctx.channel().remoteAddress())).toString();
                                 Frame frame = new Frame(0xA, serviceKey, address, null);
                                 forwardHandler.refuse(address);
-                                forwardHandler.removeLatch(address);
                                 forwardHandler.cleanDataChannel(address);
                                 proxyChannel.writeAndFlush(frame);
                                 ctx.fireChannelInactive();
@@ -124,8 +123,7 @@ public class ProxyServer {
     }
 
     public void closeChannel(Frame msg) {
-        boolean closeChannel = forwardHandler.closeChannel(msg);
-        forwardHandler.removeLatch(msg.getRealClientAddress());
+        forwardHandler.closeChannel(msg);
     }
 
     public void shutdown() throws Exception {
