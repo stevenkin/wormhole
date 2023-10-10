@@ -43,6 +43,9 @@ public class ProxyServer {
 
     private ForwardHandler forwardHandler;
 
+    private EventLoopGroup boss;
+    private EventLoopGroup worker;
+
     @Getter
     private Server server;
 
@@ -59,8 +62,8 @@ public class ProxyServer {
     }
 
     public void open() {
-        EventLoopGroup boss = new NioEventLoopGroup();
-        EventLoopGroup worker = new NioEventLoopGroup();
+        boss = new NioEventLoopGroup();
+        worker = new NioEventLoopGroup();
         ServerBootstrap bootstrap = new ServerBootstrap(); 
 
         bootstrap.group(boss, worker)
@@ -121,8 +124,17 @@ public class ProxyServer {
     }
 
     public void closeChannel(Frame msg) {
-        forwardHandler.closeChannel(msg);
+        boolean closeChannel = forwardHandler.closeChannel(msg);
         forwardHandler.removeLatch(msg.getRealClientAddress());
+        if (!closeChannel) {
+            server.removeProxyServer(serviceKey);
+        }
+    }
+
+    public void shutdown() throws Exception {
+        close();
+        boss.shutdownGracefully().syncUninterruptibly();
+        worker.shutdownGracefully().syncUninterruptibly();
     }
 
     public ForwardHandler getForwardHandler() {

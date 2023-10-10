@@ -117,4 +117,8 @@ public class Server {
             }
         }
     }
+
+    public void removeProxyServer(String serviceKey) {
+        proxyServerHandler.remove(serviceKey);
+    }
 }

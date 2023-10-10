@@ -114,11 +114,15 @@ public class ForwardHandler extends ChannelInboundHandlerAdapter {
         log.info("响应发给客户端{}", System.currentTimeMillis());
     }
 
-    public void closeChannel(Frame msg) {
+    public boolean closeChannel(Frame msg) {
         Channel channel = channelMap.get(msg.getRealClientAddress());
         if (channel != null && channel.isActive()) {
             channel.close();
         }
+        if (channelMap.isEmpty()) {
+            return false;
+        }
+        return true;
     }
 
     public static org.slf4j.Logger getLog() {

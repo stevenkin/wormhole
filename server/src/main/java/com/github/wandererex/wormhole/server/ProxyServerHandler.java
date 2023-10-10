@@ -158,4 +158,14 @@ public class ProxyServerHandler extends SimpleChannelInboundHandler<Frame> {
             holder.t = listener;
             channel.writeAndFlush(frame).addListener(holder.t);
     }
+
+    public void remove(String serviceKey) {
+        ProxyServer remove = proxyServerMap.remove(serviceKey);
+        try {
+            remove.shutdown();
+        } catch (Exception e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
 }
