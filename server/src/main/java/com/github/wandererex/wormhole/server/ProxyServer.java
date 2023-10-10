@@ -88,6 +88,7 @@ public class ProxyServer {
                                 Frame frame = new Frame(0xA, serviceKey, address, null);
                                 forwardHandler.refuse(address);
                                 forwardHandler.cleanDataChannel(address);
+                                forwardHandler.removeClientPromiss(address);
                                 proxyChannel.writeAndFlush(frame);
                                 ctx.fireChannelInactive();
                             }

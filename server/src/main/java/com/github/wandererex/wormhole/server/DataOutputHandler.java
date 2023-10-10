@@ -21,11 +21,7 @@ public class DataOutputHandler extends ChannelOutboundHandlerAdapter {
         ChannelPromise clientPromiss = forwardHandler.getClientPromiss(address);
         if (clientPromiss != null) {
             clientPromiss.addListener(f -> {
-                ctx.write(msg, promise).addListener(f1 -> {
-                    if (f1.isSuccess()) {
-                        forwardHandler.removeClientPromiss(address);
-                    }
-                });
+                ctx.write(msg, promise);
             });
         }
     }
