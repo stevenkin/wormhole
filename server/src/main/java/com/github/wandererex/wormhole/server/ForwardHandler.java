@@ -74,19 +74,14 @@ public class ForwardHandler extends ChannelInboundHandlerAdapter {
         }
     }
 
-    public void cleanDataChannel(String client) {
+    public Channel cleanDataChannel(String client) {
         channelMap.remove(client);
         Channel remove = dataChannelMap.remove(client);
         if (remove != null) {
             cMap.remove(remove);
-            remove.pipeline().remove(DataForwardHander.class);
-            remove.pipeline().addLast(new FrameDecoder());
-            remove.pipeline().addLast(new FrameEncoder());
-            remove.pipeline().addLast(new PackageDecoder());
-            remove.pipeline().addLast(new PackageEncoder());
-            remove.pipeline().addLast(proxyServer.getServer().getProxyServerHandler());
-            remove.pipeline().addLast(proxyServer.getServer().getCommandHander());
+            return remove;
         }
+        return null;
     }
 
     @Override

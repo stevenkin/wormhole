@@ -33,6 +33,10 @@ public class DataForwardHander extends ChannelInboundHandlerAdapter {
         }
     }
 
+    public void removeChannel(Channel channel) {
+        channelMap.remove(channel);
+    }
+
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         if (!(msg instanceof ByteBuf)) {

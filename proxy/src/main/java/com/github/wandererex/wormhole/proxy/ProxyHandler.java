@@ -136,15 +136,15 @@ public class ProxyHandler extends SimpleChannelInboundHandler<Frame> {
             close();
         } else if (opCode == 0xA) {
             log.info("server offline123");
-            Channel channel = map.get(address);
+            Channel channel = map.remove(address);
             if (channel != null && channel.isActive()) {
                 channel.close();
             }
-            DataClient dataClient = dataChannelMap.get(address);
+            DataClient dataClient = dataChannelMap.remove(address);
             if (dataClient != null) {
-                dataClient.revert(serviceKey, address);
+                dataClient.cache(serviceKey, address);
             }
-        } else if (opCode == 0xC1) {
+        } else if (opCode == 0xC1 || opCode == 0xC21) {
             log.info("data client revert");
             DataClient dataClient = dataChannelMap.get(address);
             CharSequence readCharSequence = payload.readCharSequence(payload.readableBytes(), Charset.forName("UTF-8"));
@@ -152,6 +152,27 @@ public class ProxyHandler extends SimpleChannelInboundHandler<Frame> {
                 ChannelPromise channelPromise = dataClient.getReqMap().get(readCharSequence.toString());
                 if (channelPromise != null) {
                     channelPromise.setSuccess();
+                }
+            }
+        } else if (msg.getOpCode() == 0xC2) {
+            log.info("oxC {}", msg);
+            DataClient dataClient = dataChannelMap.get(address);
+            if (dataClient != null) {
+                dataClient.cache(serviceKey, address);
+                Frame frame = new Frame(0xC21, msg.getServiceKey(), msg.getRealClientAddress(), msg.getPayload());
+                write(frame, ctx.channel());
+            }
+        } else if (msg.getOpCode() == 0xB1) {
+            log.info("oxB1 {}", msg);
+            DataClient dataClient = dataChannelMap.get(address);
+            String key = payload.readCharSequence(payload.readableBytes(), Charset.forName("UTF-8")).toString();
+            if (dataClient != null) {
+                ProxyClient proxyClient2 = dataClient.getProxyClient();
+                if (proxyClient2 != null) {
+                    ChannelPromise channelPromise = proxyClient2.getReqMap().get(key);
+                    if (channelPromise != null) {
+                        channelPromise.setSuccess();
+                    }
                 }
             }
         } else if (opCode == 0x01) {
@@ -179,5 +200,6 @@ public class ProxyHandler extends SimpleChannelInboundHandler<Frame> {
         };
         holder.t = listener;
         channel.writeAndFlush(frame).addListener(holder.t);
+    }
 }
-}
+    

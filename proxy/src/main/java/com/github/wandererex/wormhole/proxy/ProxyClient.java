@@ -30,11 +30,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+
+import org.apache.commons.lang3.RandomStringUtils;
 
 @Slf4j
 public class ProxyClient {
@@ -70,6 +73,9 @@ public class ProxyClient {
 
     private ProxyServiceConfig config;
 
+    @Getter
+    private Map<String, ChannelPromise> reqMap = new ConcurrentHashMap<>();
+
     public ProxyClient(ProxyServiceConfig config) {
         this.clientBootstrap = new Bootstrap();
         this.clientGroup = new NioEventLoopGroup();
@@ -85,13 +91,21 @@ public class ProxyClient {
                             ch.pipeline().addLast(new ChannelInboundHandlerAdapter() {
                                 @Override
                                 public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-                                    Frame frame = new Frame(0xB, serviceKey, realAddress, null);
+                                    String key = System.currentTimeMillis() + RandomStringUtils.randomAlphabetic(8);
+                                    ByteBuf buffer = PooledByteBufAllocator.DEFAULT.buffer();
+                                    buffer.writeCharSequence(key, Charset.forName("UTF-8"));
+                                    Frame frame = new Frame(0xB, serviceKey, realAddress, buffer);
+                                
+                                    ChannelPromise newPromise = ctx.newPromise();
+                                    reqMap.put(System.currentTimeMillis() + RandomStringUtils.random(8), newPromise);
                                     channel1.writeAndFlush(frame);
+                                    newPromise.addListener(f -> {
+                                        if (dataClient != null) {
+                                            dataClient.cache(serviceKey, realAddress);
+                                        }
+                                    });
                                     ctx.fireChannelInactive();
-                                    if (dataClient != null) {
-                                        dataClient.revert(serviceKey, realAddress);
-                                    }
-                                }
+                                } 
                                 @Override
                                 public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
                                     log.info("收到内网服务响应{}", System.currentTimeMillis());

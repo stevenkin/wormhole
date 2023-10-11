@@ -52,12 +52,15 @@ public class DataClient {
 
     private boolean isTaked;
 
+    private boolean cache;
+
     @Getter
     private Map<String, ChannelPromise> reqMap = new ConcurrentHashMap<>();
 
     @Getter
     private DataClientHandler dataClientHandler = new DataClientHandler();
 
+    @Getter
     private ProxyClient proxyClient;
 
     @Setter
@@ -93,23 +96,27 @@ public class DataClient {
         if (isTaked) {
             throw new RuntimeException("dataclient is taked");
         }
-        Frame frame = new Frame(0xD, serviceKey, address, null);
-        ChannelPromise send = send(frame, channel);
-        send.addListener(f -> {
-            if (f.isSuccess()) {
-                synchronized(DataClient.this) {
-                    channel.pipeline().remove(FrameDecoder.class);
-                    channel.pipeline().remove(FrameEncoder.class);
-                    channel.pipeline().remove(PackageDecoder.class);
-                    channel.pipeline().remove(PackageEncoder.class);
-                    channel.pipeline().remove(DataClientCmdHandler.class);
-                    channel.pipeline().remove(LoggingHandler.class);
-                    channel.pipeline().addLast(dataClientHandler);
-                    channel.pipeline().addLast(new LoggingHandler());
+        ChannelPromise send = channel.newPromise();
+        send.setSuccess();
+        if (!cache) {
+            Frame frame = new Frame(0xD, serviceKey, address, null);
+            send = send(frame, channel);
+            send.addListener(f -> {
+                if (f.isSuccess()) {
+                    synchronized(DataClient.this) {
+                        channel.pipeline().remove(FrameDecoder.class);
+                        channel.pipeline().remove(FrameEncoder.class);
+                        channel.pipeline().remove(PackageDecoder.class);
+                        channel.pipeline().remove(PackageEncoder.class);
+                        channel.pipeline().remove(DataClientCmdHandler.class);
+                        channel.pipeline().remove(LoggingHandler.class);
+                        channel.pipeline().addLast(dataClientHandler);
+                        channel.pipeline().addLast(new LoggingHandler());
+                        isTaked = true;
+                    }
                 }
-            }
-        });
-        isTaked = true;
+            });
+        }
         return send;
     }
 
@@ -117,7 +124,6 @@ public class DataClient {
         if (!isTaked) {
             return channel2.newPromise().setFailure(new RuntimeException("dataclient is not taked"));
         }
-        proxyClient = null;
         Frame frame = new Frame(0xC, serviceKey, address, null);
         ChannelPromise send = send(frame, channel2);
         send.addListener(f -> {
@@ -131,10 +137,28 @@ public class DataClient {
                     channel.pipeline().addLast(new PackageEncoder());
                     channel.pipeline().addLast(new DataClientCmdHandler(DataClient.this));
                     channel.pipeline().addLast(new LoggingHandler());
+                    isTaked = false;
+                    cache = false;
+                    proxyClient = null;
                 }
             }
         });
-        isTaked = false;
+        return send;
+    }
+
+    public synchronized ChannelPromise cache(String serviceKey, String address) {
+        if (!isTaked) {
+            throw new RuntimeException("dataclient is not taked");
+        }
+        Frame frame = new Frame(0xC2, serviceKey, address, null);
+        ChannelPromise send = send(frame, channel2);
+        send.addListener(f -> {
+            if (f.isSuccess()) {
+                proxyClient = null;
+                isTaked = false;
+                cache = true;
+            }
+        });
         return send;
     }
 

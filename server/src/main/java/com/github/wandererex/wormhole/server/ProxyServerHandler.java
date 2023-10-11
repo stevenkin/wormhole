@@ -119,6 +119,8 @@ public class ProxyServerHandler extends SimpleChannelInboundHandler<Frame> {
             if (proxyServer != null) {
                 proxyServer.closeChannel(msg);
             }
+            msg.setOpCode(0XB1);
+            write(msg, ctx.channel());
         }
         if (msg.getOpCode() == 0xD) {
             log.info("oxD {}", msg);
@@ -134,7 +136,23 @@ public class ProxyServerHandler extends SimpleChannelInboundHandler<Frame> {
                 write(frame, ctx.channel());
             }
         }
+        if (msg.getOpCode() == 0xC2) {
+            log.info("oxC {}", msg);
+            ProxyServer proxyServer = proxyServerMap.get(msg.getServiceKey());
+            if (proxyServer != null) {
+                Channel cleanDataChannel = proxyServer.getForwardHandler().cleanDataChannel(msg.getRealClientAddress());
+                if (cleanDataChannel != null) {
+                    ServerDataClientPool.revertClient(cleanDataChannel);
+                }
+                proxyServer.getForwardHandler().removeClientPromiss(msg.getRealClientAddress());
+                Frame frame = new Frame(0xC21, msg.getServiceKey(), msg.getRealClientAddress(), msg.getPayload());
+                write(frame, ctx.channel());
+            }
+        }
         if (msg.getOpCode() == 0x0) {
+            ctx.fireChannelRead(msg);
+        }
+        if (msg.getOpCode() == 0xC21) {
             ctx.fireChannelRead(msg);
         }
     }

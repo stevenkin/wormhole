@@ -17,6 +17,7 @@ import org.apache.commons.lang3.StringUtils;
 public class Server {
     private int port;
 
+    @Getter
     private DataForwardHander dataForwardHander;
 
     @Getter

@@ -77,8 +77,9 @@ public class ProxyServer {
                             public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
                                 String address = ((InetSocketAddress)(ctx.channel().remoteAddress())).toString();
                                 forwardHandler.setChannel(address, ctx.channel());
-                                Frame frame = new Frame(0x9, serviceKey, address, null);
+                                buildDataChannel(address, serviceKey);
                                 forwardHandler.buildClientPromiss(address, ctx.newPromise());
+                                Frame frame = new Frame(0x9, serviceKey, address, null);
                                 proxyChannel.writeAndFlush(frame);
                             }
 
@@ -87,7 +88,7 @@ public class ProxyServer {
                                 String address = ((InetSocketAddress)(ctx.channel().remoteAddress())).toString();
                                 Frame frame = new Frame(0xA, serviceKey, address, null);
                                 forwardHandler.refuse(address);
-                                forwardHandler.cleanDataChannel(address);
+                                cleanDataChannel(address, serviceKey);
                                 forwardHandler.removeClientPromiss(address);
                                 proxyChannel.writeAndFlush(frame);
                                 ctx.fireChannelInactive();
@@ -114,6 +115,23 @@ public class ProxyServer {
             boss.shutdownGracefully().syncUninterruptibly();
             worker.shutdownGracefully().syncUninterruptibly();
         }));
+    }
+
+    public Channel buildDataChannel(String address, String serviceKey) {
+        Channel client = ServerDataClientPool.getClient();
+        if (channel != null) {
+            server.getDataForwardHander().setChannel(address, serviceKey, client);
+            return client;
+        }
+        return null;
+    }
+
+    public void cleanDataChannel(String address, String serviceKey) {
+        Channel cleanDataChannel = forwardHandler.cleanDataChannel(address);
+        if (cleanDataChannel != null) {
+            server.getDataForwardHander().removeChannel(cleanDataChannel);
+            ServerDataClientPool.revertClient(cleanDataChannel);
+        }
     }
 
     public void close() {
