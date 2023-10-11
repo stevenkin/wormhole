@@ -89,6 +89,12 @@ public class ProxyServerHandler extends SimpleChannelInboundHandler<Frame> {
                 proxyServer.refuse(msg.getRealClientAddress());
             }
         }
+        if (msg.getOpCode() == 0x90) {
+            ProxyServer proxyServer = proxyServerMap.get(msg.getServiceKey());
+            if (proxyServer != null) {
+                proxyServer.refuse(msg.getRealClientAddress());
+            }
+        }
         if (msg.getOpCode() == 0x3) {
             log.info("服务器收到响应{}", System.currentTimeMillis());
             log.info("server read from proxy data {}", msg);
