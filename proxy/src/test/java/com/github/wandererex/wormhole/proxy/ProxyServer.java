@@ -76,7 +76,7 @@ public class ProxyServer {
         }
     }
 
-    public static void main(String[] args) {
-        new ProxyServer(8090).open();
-    }
+    // public static void main(String[] args) {
+    //     new ProxyServer(8090).open();
+    // }
 }

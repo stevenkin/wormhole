@@ -3,5 +3,6 @@
     "java.debug.settings.onBuildFailureProceed": true,
     "java.project.sourcePaths": [
         "session"
-    ]
+    ],
+    "java.dependency.packagePresentation": "hierarchical"
 }
