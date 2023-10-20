@@ -40,11 +40,10 @@ java -jar proxy-1.0.0-SNAPSHOT-jar-with-dependencies.jar --serverHost 127.0.0.1 
   }
 }
 ```        
+
+### 设计
+![这是图片](./doc.png "这是图片")
 ### 运行实例
 ![这是图片](./WX20230515-105120@2x.png "这是图片")
 
-### 性能测试
-![这是图片](./20230914140636.png "这是图片")
-优化了一点，目前wrk测试
-![这是图片](./WechatIMG1040.png "这是图片")
 
