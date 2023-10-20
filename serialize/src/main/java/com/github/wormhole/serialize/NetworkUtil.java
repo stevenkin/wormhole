@@ -280,46 +280,4 @@ public class NetworkUtil {
         }
         return false;
     }
-
-    public static List<Frame> byteArraytoFrameList(byte[] array, String serviceKey, String address) {
-        int n = 0;
-        byte[] bytes = new byte[1024];
-        List<Frame> frames = new ArrayList<>();
-        for (int i = 0; i < array.length; i += n) {
-            if (i + 1024 < array.length) {
-                System.arraycopy(array, i, bytes, 0, 1024);
-                n = 1024;
-                Frame frame = new Frame(0x3, serviceKey, address, UnpooledByteBufAllocator.DEFAULT.buffer().writeBytes(bytes));
-                frames.add(frame);
-            } else {
-                byte[] bytes1 = new byte[array.length - i];
-                System.arraycopy(array, i, bytes1, 0, bytes1.length);
-                n = bytes1.length;
-                Frame frame = new Frame(0x3, serviceKey, address, UnpooledByteBufAllocator.DEFAULT.buffer().writeBytes(bytes1));
-                frames.add(frame);
-            }
-        }
-        return frames;
-    }
-
-    public static List<Frame> byteArraytoFrameList(ByteBuf byteBuf, String serviceKey, String address) {
-        int n = 0;
-        List<Frame> frames = new ArrayList<>();
-        for (int i = 0; i < byteBuf.readableBytes(); i += n) {
-            if (i + 1024 < byteBuf.readableBytes()) {
-                n = 1024;
-                ByteBuf buffer = PooledByteBufAllocator.DEFAULT.buffer(n);
-                buffer.writeBytes(byteBuf, i, n);
-                Frame frame = new Frame(0x3, serviceKey, address, buffer);
-                frames.add(frame);
-            } else {
-                n = byteBuf.readableBytes() - i;
-                ByteBuf buffer = PooledByteBufAllocator.DEFAULT.buffer(n);
-                buffer.writeBytes(byteBuf, i, n);
-                Frame frame = new Frame(0x3, serviceKey, address, buffer);
-                frames.add(frame);
-            }
-        }
-        return frames;
-    }
 }

@@ -20,6 +20,8 @@ public class Frame {
     //0xE:重连
     private int opCode;
 
+    private String sessionId;
+
     private String serviceKey;
 
     private String realClientAddress;

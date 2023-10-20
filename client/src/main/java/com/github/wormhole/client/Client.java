@@ -1,5 +1,8 @@
 package com.github.wormhole.client;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 import com.github.wormhole.serialize.Frame;
 import com.github.wormhole.serialize.NetworkUtil;
 
@@ -17,7 +20,7 @@ import io.netty.handler.logging.LoggingHandler;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public abstract class Client {
+public abstract class Client<T> {
     private Bootstrap clientBootstrap;
 
     private NioEventLoopGroup clientGroup;
@@ -26,7 +29,7 @@ public abstract class Client {
 
     private Integer port;
 
-    private Channel channel;
+    protected Channel channel;
 
     public Client(String ip, Integer port) {
         this.ip = ip;
@@ -50,7 +53,7 @@ public abstract class Client {
 
     protected abstract void initChannelPipeline(ChannelPipeline pipeline);
 
-    protected abstract <T> ChannelPromise send(T msg);
+    protected abstract ChannelFuture send(T msg);
 
     public Channel connect(String ip, int port) throws Exception {
         /**
