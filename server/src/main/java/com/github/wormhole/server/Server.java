@@ -2,6 +2,7 @@ package com.github.wormhole.server;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.github.wormhole.client.SignalHandler;
 import com.github.wormhole.serialize.FrameDecoder;
 import com.github.wormhole.serialize.FrameEncoder;
 import com.github.wormhole.serialize.PackageDecoder;
@@ -17,7 +18,6 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
-import lombok.Getter;
 
 public class Server {
     private int port;
@@ -26,6 +26,8 @@ public class Server {
 
     private EventLoopGroup boss = new NioEventLoopGroup();
     private EventLoopGroup worker = new NioEventLoopGroup();
+
+    private SignalHandler signalHandler;
 
     public Server(int port) {
         this.port = port;
@@ -44,7 +46,7 @@ public class Server {
                         pipeline.addLast(new FrameEncoder());
                         pipeline.addLast(new PackageDecoder());
                         pipeline.addLast(new PackageEncoder());
-                        pipeline.addLast(new SignalServerHandler());
+                        pipeline.addLast(signalHandler);
                         pipeline.addLast(new LoggingHandler());
                     }
                 });

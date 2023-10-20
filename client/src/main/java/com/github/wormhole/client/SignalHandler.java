@@ -7,7 +7,9 @@ import com.github.wormhole.serialize.Frame;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.channel.ChannelHandler.Sharable;
 
+@Sharable
 public class SignalHandler extends SimpleChannelInboundHandler<Frame>{
     private List<SignalProcessor> list = new ArrayList<>();
 
