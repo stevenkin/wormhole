@@ -1,6 +1,9 @@
 package com.github.wormhole.client;
 
+import com.github.wormhole.serialize.Frame;
+
 import io.netty.channel.ChannelPipeline;
+import io.netty.channel.ChannelPromise;
 
 public class SignalClient extends Client{
 
@@ -11,6 +14,11 @@ public class SignalClient extends Client{
     @Override
     protected void initChannelPipeline(ChannelPipeline pipeline) {
         
+    }
+
+    @Override
+    protected <Frame>  ChannelPromise send(Frame msg) {
+        return null;
     }
     
 }

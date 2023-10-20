@@ -1,5 +1,6 @@
 package com.github.wormhole.client;
 
+import com.github.wormhole.serialize.Frame;
 import com.github.wormhole.serialize.NetworkUtil;
 
 import io.netty.bootstrap.Bootstrap;
@@ -8,6 +9,7 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.ChannelPipeline;
+import io.netty.channel.ChannelPromise;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
@@ -47,6 +49,8 @@ public abstract class Client {
     }
 
     protected abstract void initChannelPipeline(ChannelPipeline pipeline);
+
+    protected abstract <T> ChannelPromise send(T msg);
 
     public Channel connect(String ip, int port) throws Exception {
         /**
