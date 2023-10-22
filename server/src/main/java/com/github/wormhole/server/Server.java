@@ -1,12 +1,11 @@
 package com.github.wormhole.server;
 
-import org.apache.commons.lang3.StringUtils;
-
-import com.github.wormhole.client.SignalHandler;
-import com.github.wormhole.serialize.FrameDecoder;
 import com.github.wormhole.serialize.FrameEncoder;
 import com.github.wormhole.serialize.PackageDecoder;
 import com.github.wormhole.serialize.PackageEncoder;
+import org.apache.commons.lang3.StringUtils;
+
+import com.github.wormhole.serialize.FrameDecoder;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
@@ -18,6 +17,8 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
+
+import com.github.wormhole.client.SignalHandler;
 
 public class Server {
     private int port;
