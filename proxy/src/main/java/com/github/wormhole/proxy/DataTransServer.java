@@ -1,5 +1,5 @@
 package com.github.wormhole.proxy;
 
-public class DatatransServer {
+public class DataTransServer {
     
 }
