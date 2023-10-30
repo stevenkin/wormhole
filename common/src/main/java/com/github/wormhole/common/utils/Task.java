@@ -1,4 +1,4 @@
-package com.github.wormhole.serialize;
+package com.github.wormhole.common.utils;
 
 import io.netty.channel.Channel;
 

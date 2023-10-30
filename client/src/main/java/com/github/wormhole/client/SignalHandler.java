@@ -13,8 +13,9 @@ import io.netty.channel.ChannelHandler.Sharable;
 public class SignalHandler extends SimpleChannelInboundHandler<Frame>{
     private List<SignalProcessor> list = new ArrayList<>();
 
-    public void register(SignalProcessor signalProcessor) {
+    public SignalHandler register(SignalProcessor signalProcessor) {
         this.list.add(signalProcessor);
+        return this;
     }
 
     @Override

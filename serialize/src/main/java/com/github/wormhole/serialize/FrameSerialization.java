@@ -12,6 +12,14 @@ public class FrameSerialization implements Serialization<Frame> {
     public ByteBuf serialize(Frame msg, ByteBuf byteBuf) {
         int opCode = msg.getOpCode();
         byteBuf.writeInt(opCode);
+        String sessionId = msg.getSessionId();
+        if (StringUtils.isNotEmpty(sessionId)) {
+            byte[] bytes = msg.getSessionId().getBytes(StandardCharsets.UTF_8);
+            byteBuf.writeInt(bytes.length);
+            byteBuf.writeBytes(bytes);
+        } else {
+            byteBuf.writeInt(0);
+        }
         String serviceKey = msg.getServiceKey();
         if (StringUtils.isNotEmpty(serviceKey)) {
             byte[] bytes = msg.getServiceKey().getBytes(StandardCharsets.UTF_8);
@@ -42,6 +50,13 @@ public class FrameSerialization implements Serialization<Frame> {
         frame.setOpCode(byteBuf.readInt());
         int n = byteBuf.readInt();
         byte[] bytes = null;
+        if (n > 0) {
+            bytes = new byte[n];
+            byteBuf.readBytes(bytes, 0, n);
+            String sessionId = new String(bytes, StandardCharsets.UTF_8);
+            frame.setSessionId(sessionId);
+        }
+        n = byteBuf.readInt();
         if (n > 0) {
             bytes = new byte[n];
             byteBuf.readBytes(bytes, 0, n);

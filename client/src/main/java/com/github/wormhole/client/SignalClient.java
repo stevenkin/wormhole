@@ -6,8 +6,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.lang3.RandomStringUtils;
 
+import com.github.wormhole.common.utils.RetryUtil;
 import com.github.wormhole.serialize.Frame;
-import com.github.wormhole.serialize.Holder;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.PooledByteBufAllocator;
@@ -34,18 +34,11 @@ public class SignalClient extends Client<Frame>{
     protected  ChannelFuture send(Frame msg) {
         String key = System.currentTimeMillis() + RandomStringUtils.randomAlphabetic(8);
         msg.setSessionId(key);
-        Holder<GenericFutureListener> holder = new Holder<>();
-        GenericFutureListener listener = f1 -> {
-            if (!f1.isSuccess()) {
-                channel.writeAndFlush(msg).addListener(holder.t);;
-            }
-        };
-        holder.t = listener;
         ChannelPromise newPromise = channel.newPromise();
         if (key != null) {
              reqMap.put(key, newPromise);
         }
-        channel.writeAndFlush(msg).addListener(holder.t);
+        RetryUtil.write(channel, msg);
         return newPromise;
     }
     

@@ -6,6 +6,7 @@
         <artifactId>wormhole</artifactId>
         <version>1.0.0-SNAPSHOT</version>
     </parent>
+    <groupId>com.github.wormhole</groupId>
     <artifactId>server</artifactId>
     <name>Archetype - server</name>
     <url>http://maven.apache.org</url>
@@ -17,13 +18,13 @@
         </dependency>
 
         <dependency>
-            <groupId>com.github</groupId>
+            <groupId>com.github.wormhole</groupId>
             <artifactId>serialize</artifactId>
             <version>1.0.0-SNAPSHOT</version>
         </dependency>
 
         <dependency>
-            <groupId>com.github</groupId>
+            <groupId>com.github.wormhole</groupId>
             <artifactId>client</artifactId>
             <version>1.0.0-SNAPSHOT</version>
         </dependency>

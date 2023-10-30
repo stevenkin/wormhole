@@ -7,5 +7,5 @@ import io.netty.channel.ChannelHandlerContext;
 public interface SignalProcessor {
     boolean isSupport(Frame frame);
 
-    void process(ChannelHandlerContext ctx, Frame msg);
+    void process(ChannelHandlerContext ctx, Frame msg) throws Exception;
 }

@@ -1,11 +1,13 @@
 package com.github.wormhole.server;
 
+import com.github.wormhole.common.config.ProxyServiceConfig;
 import com.github.wormhole.serialize.FrameDecoder;
 import com.github.wormhole.serialize.FrameEncoder;
 import com.github.wormhole.serialize.PackageDecoder;
 import com.github.wormhole.serialize.PackageEncoder;
 
 import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
@@ -24,10 +26,17 @@ public class ProxyServer {
     private EventLoopGroup boss;
     private EventLoopGroup worker;
 
-    public ProxyServer(int port, EventLoopGroup boss, EventLoopGroup worker) {
+    private ProxyServiceConfig config;
+    private Channel proxyChannel;
+    private String proxyId;
+
+    public ProxyServer(EventLoopGroup boss, EventLoopGroup worker, String proxyId, ProxyServiceConfig config, Channel channel) {
         this.port = port;
         this.boss = boss;
         this.worker = worker;
+        this.config = config;
+        this.proxyChannel = channel;
+        this.proxyId = proxyId;
     }
 
     public void open() {

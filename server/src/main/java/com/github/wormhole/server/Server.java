@@ -3,11 +3,18 @@ package com.github.wormhole.server;
 import com.github.wormhole.serialize.FrameEncoder;
 import com.github.wormhole.serialize.PackageDecoder;
 import com.github.wormhole.serialize.PackageEncoder;
+import com.github.wormhole.server.processor.ProxyRegisterProcessor;
+
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+
 import org.apache.commons.lang3.StringUtils;
 
 import com.github.wormhole.serialize.FrameDecoder;
 
 import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
@@ -19,6 +26,7 @@ import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 
 import com.github.wormhole.client.SignalHandler;
+import com.github.wormhole.common.config.ProxyServiceConfig;
 
 public class Server {
     private int port;
@@ -30,11 +38,14 @@ public class Server {
 
     private SignalHandler signalHandler;
 
+    private Map<String, ProxyServer> proxyServerMap = new ConcurrentHashMap<>();
+
     public Server(int port) {
         this.port = port;
     }
 
     public void open() {
+        buildSignalHandler();
         ServerBootstrap bootstrap = new ServerBootstrap();
 
         bootstrap.group(boss, worker)
@@ -68,6 +79,21 @@ public class Server {
             boss.shutdownGracefully().syncUninterruptibly();
             worker.shutdownGracefully().syncUninterruptibly();
         }));
+    }
+
+    public String buildProxyServer(ProxyServiceConfig config, Channel channel) {
+        String proxyId = UUID.randomUUID().toString();
+        ProxyServer proxyServer = new ProxyServer(boss, worker, proxyId, config, channel);
+        proxyServerMap.put(proxyId, proxyServer);
+        return proxyId;
+    }
+
+    private void buildSignalHandler() {
+        signalHandler = new SignalHandler();
+        signalHandler.register(new ProxyRegisterProcessor(this))
+            .register(null)
+            .register(null)
+            .register(null);
     }
 
     public void close() {

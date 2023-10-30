@@ -1,14 +1,17 @@
-package com.github.wormhole.serialize;
+package com.github.wormhole.common.utils;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import com.github.wormhole.serialize.ProxyServiceConfig.ServiceConfig;
+
 import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
+
+import com.github.wormhole.common.config.ProxyServiceConfig;
+import com.github.wormhole.common.config.ProxyServiceConfig.ServiceConfig;
 
 public class ConfigLoader {
     public static ProxyServiceConfig load(String path) throws IOException {
