@@ -1,16 +1,22 @@
 package com.github.wormhole.server.processor;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
+
+import org.apache.commons.lang3.RandomStringUtils;
 
 import com.github.wormhole.client.SignalProcessor;
 import com.github.wormhole.common.config.ProxyServiceConfig;
 import com.github.wormhole.common.utils.ConfigLoader;
+import com.github.wormhole.common.utils.RetryUtil;
 import com.github.wormhole.serialize.Frame;
 import com.github.wormhole.server.ProxyServer;
 import com.github.wormhole.server.Server;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +39,13 @@ public class ProxyRegisterProcessor implements SignalProcessor{
         String s = msg.getPayload().toString(StandardCharsets.UTF_8);
         ProxyServiceConfig proxyServiceConfig = ConfigLoader.parse(s);
         String proxyId = server.buildProxyServer(proxyServiceConfig, ctx.channel());
+        Frame frame = new Frame();
+        frame.setOpCode(0x10);
+        frame.setRequestId(System.currentTimeMillis() + RandomStringUtils.randomAlphabetic(8));
+        ByteBuf buffer = PooledByteBufAllocator.DEFAULT.buffer();
+        buffer.writeCharSequence(proxyId, Charset.forName("UTF-8"));
+        frame.setPayload(buffer);
+        RetryUtil.write(ctx.channel(), frame);
     }
     
 }

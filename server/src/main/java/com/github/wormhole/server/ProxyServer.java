@@ -1,6 +1,15 @@
 package com.github.wormhole.server;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import com.github.wormhole.client.DataClientPool;
 import com.github.wormhole.common.config.ProxyServiceConfig;
+import com.github.wormhole.common.config.ProxyServiceConfig.ServiceConfig;
+import com.github.wormhole.common.utils.RetryUtil;
+import com.github.wormhole.serialize.Frame;
 import com.github.wormhole.serialize.FrameDecoder;
 import com.github.wormhole.serialize.FrameEncoder;
 import com.github.wormhole.serialize.PackageDecoder;
@@ -19,8 +28,6 @@ import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 
 public class ProxyServer {
-    private int port;
-
     private ChannelFuture channelFuture;
 
     private EventLoopGroup boss;
@@ -29,17 +36,22 @@ public class ProxyServer {
     private ProxyServiceConfig config;
     private Channel proxyChannel;
     private String proxyId;
+    private Map<Integer, String> portServiceMap = new HashMap<>();
+
+    private List<Channel> serverChannels = new ArrayList<>();
+
+    private DataClientPool dataClientPool;
 
     public ProxyServer(EventLoopGroup boss, EventLoopGroup worker, String proxyId, ProxyServiceConfig config, Channel channel) {
-        this.port = port;
         this.boss = boss;
         this.worker = worker;
         this.config = config;
         this.proxyChannel = channel;
         this.proxyId = proxyId;
+        this.dataClientPool = new DataClientPool();
     }
 
-    public void open() {
+    public void open() throws Exception {
         ServerBootstrap bootstrap = new ServerBootstrap();
 
         bootstrap.group(boss, worker)
@@ -48,24 +60,19 @@ public class ProxyServer {
                 .childHandler(new ChannelInitializer<NioSocketChannel>() {
                     protected void initChannel(NioSocketChannel ch) throws Exception {
                         ChannelPipeline pipeline = ch.pipeline();
-                        pipeline.addLast(new ClientHandler());
+                        pipeline.addLast(new ClientHandler(ProxyServer.this));
                         pipeline.addLast(new LoggingHandler());
                     }
                 });
-
-        try {
-            channelFuture = bootstrap.bind(port).sync();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+        Map<String, ServiceConfig> map = config.getMap();
+        for (Map.Entry<String, ServiceConfig> entry : map.entrySet()) {
+            portServiceMap.put(entry.getValue().getMappingPort(), entry.getKey());
+            Channel channel = bootstrap.bind(entry.getValue().getMappingPort()).sync().channel();
+            serverChannels.add(channel);
         }
 
-        channelFuture.addListener((future) -> {
-            if (!future.isSuccess()) {
-                future.cause().printStackTrace();
-            }
-
-        });
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            serverChannels.forEach(Channel::close);
             boss.shutdownGracefully().syncUninterruptibly();
             worker.shutdownGracefully().syncUninterruptibly();
         }));
@@ -75,5 +82,17 @@ public class ProxyServer {
         if (channelFuture != null) {
             channelFuture.channel().close();
         }
+    }
+
+    public void sendToProxy(Frame frame) {
+        RetryUtil.write(proxyChannel, frame);
+    }
+
+    public String getServiceKey(Integer port) {
+        return portServiceMap.get(port);
+    }
+
+    public DataClientPool getDataClientPool() {
+        return dataClientPool;
     }
 }

@@ -14,12 +14,12 @@ public class DataClient extends Client<ByteBuf>{
     }
 
     @Override
-    protected void initChannelPipeline(ChannelPipeline pipeline) {
+    public void initChannelPipeline(ChannelPipeline pipeline) {
         pipeline.addLast(new DataTransHandler(this));
     }
 
     @Override
-    protected ChannelFuture send(ByteBuf msg) {
+    public ChannelFuture send(ByteBuf msg) {
         return serviceChannel.writeAndFlush(msg);
     }
 

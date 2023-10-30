@@ -81,9 +81,10 @@ public class Server {
         }));
     }
 
-    public String buildProxyServer(ProxyServiceConfig config, Channel channel) {
+    public String buildProxyServer(ProxyServiceConfig config, Channel channel) throws Exception {
         String proxyId = UUID.randomUUID().toString();
         ProxyServer proxyServer = new ProxyServer(boss, worker, proxyId, config, channel);
+        proxyServer.open();
         proxyServerMap.put(proxyId, proxyServer);
         return proxyId;
     }

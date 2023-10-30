@@ -3,6 +3,7 @@ package com.github.wormhole.client;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.github.wormhole.common.utils.RetryUtil;
 import com.github.wormhole.serialize.Frame;
 
 import io.netty.channel.ChannelHandlerContext;
@@ -20,10 +21,15 @@ public class SignalHandler extends SimpleChannelInboundHandler<Frame>{
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, Frame msg) throws Exception {
-        for (SignalProcessor processor : list) {
+        try {
+            for (SignalProcessor processor : list) {
             if (processor.isSupport(msg)) {
                 processor.process(ctx, msg);
             }
+        }
+        } catch (Exception e) {
+            msg.setOpCode(-0X1);
+            RetryUtil.write(ctx.channel(), msg);
         }
     }
     

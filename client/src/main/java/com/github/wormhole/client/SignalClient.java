@@ -33,7 +33,7 @@ public class SignalClient extends Client<Frame>{
     @Override
     protected  ChannelFuture send(Frame msg) {
         String key = System.currentTimeMillis() + RandomStringUtils.randomAlphabetic(8);
-        msg.setSessionId(key);
+        msg.setRequestId(key);
         ChannelPromise newPromise = channel.newPromise();
         if (key != null) {
              reqMap.put(key, newPromise);

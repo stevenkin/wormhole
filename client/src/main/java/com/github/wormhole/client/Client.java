@@ -45,9 +45,9 @@ public abstract class Client<T> {
         }));
     }
 
-    protected abstract void initChannelPipeline(ChannelPipeline pipeline);
+    public abstract void initChannelPipeline(ChannelPipeline pipeline);
 
-    protected abstract ChannelFuture send(T msg);
+    public abstract ChannelFuture send(T msg);
 
     public Channel connect(String ip, int port) throws Exception {
         /**
