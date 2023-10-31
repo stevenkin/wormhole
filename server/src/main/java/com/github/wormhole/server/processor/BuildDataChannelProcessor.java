@@ -2,7 +2,7 @@ package com.github.wormhole.server.processor;
 
 import java.nio.charset.Charset;
 
-import com.github.wormhole.client.SignalProcessor;
+import com.github.wormhole.client.Processor;
 import com.github.wormhole.serialize.Frame;
 import com.github.wormhole.server.ProxyServer;
 import com.github.wormhole.server.Server;
@@ -13,7 +13,7 @@ import io.netty.channel.ChannelHandlerContext;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class BuildDataChannelProcessor implements SignalProcessor{
+public class BuildDataChannelProcessor implements Processor{
     private Server server;
 
     public BuildDataChannelProcessor(Server server) {
