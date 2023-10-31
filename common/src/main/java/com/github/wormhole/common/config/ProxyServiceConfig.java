@@ -24,6 +24,8 @@ public class ProxyServiceConfig {
 
     private String password;
 
+    private Integer dataTransPort;
+
     public  ServiceConfig getServiceConfig(String serviceKey) {
         return map.get(serviceKey);
     }
@@ -34,5 +36,9 @@ public class ProxyServiceConfig {
 
     public void addConfig(String key, ServiceConfig config) {
         map.put(key, config);
+    }
+
+    public void setDataTransPort(Integer integer) {
+        this.dataTransPort = dataTransPort;
     }
 }

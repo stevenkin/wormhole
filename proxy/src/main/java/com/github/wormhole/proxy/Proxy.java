@@ -41,7 +41,7 @@ public class Proxy {
         this.config = ConfigLoader.load(configPath);
         this.serverHost = config.getServerHost();
         this.serverPort = config.getServerPort();
-        this.dataClientPool = new DataClientPool(serverHost, serverPort);
+        this.dataClientPool = new DataClientPool(serverHost, config.getDataTransPort());
         this.signalClient = new SignalClient(serverHost, serverPort);
     }
 

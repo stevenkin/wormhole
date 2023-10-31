@@ -33,6 +33,7 @@ public class ConfigLoader {
         }
         proxyServiceConfig.setServerHost(jsonObject.getString("serverHost"));
         proxyServiceConfig.setServerPort(jsonObject.getInteger("serverPort"));
+        proxyServiceConfig.setDataTransPort(jsonObject.getInteger("dataTransPort"));
         proxyServiceConfig.setUsername(jsonObject.getString("username"));
         proxyServiceConfig.setPassword(jsonObject.getString("password"));
         return proxyServiceConfig;
