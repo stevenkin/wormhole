@@ -1,0 +1,11 @@
+{
+  "http": {
+    "ip": "127.0.0.1",
+    "port": "8080",
+    "mappingPort": "19000"
+  },
+  "serverHost": "127.0.0.1",
+  "serverPort": 9000,
+  "username":"wjg",
+  "password": "123456"
+}
