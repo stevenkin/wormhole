@@ -27,7 +27,7 @@ public class DataClient extends Client<ByteBuf>{
         this.directClient = directClient;
     }
 
-    public DataClient getDirectChannel() {
+    public DataClient getDirectClient() {
         return directClient;
     }
 }

@@ -40,8 +40,6 @@ public class ProxyServer {
 
     private List<Channel> serverChannels = new ArrayList<>();
 
-    private DataClientPool dataClientPool;
-
     private ClientHandler clientHandler;
 
     public ProxyServer(EventLoopGroup boss, EventLoopGroup worker, String proxyId, ProxyServiceConfig config, Channel channel) {
@@ -93,49 +91,4 @@ public class ProxyServer {
         return portServiceMap.get(port);
     }
 
-    public DataClientPool getDataClientPool() {
-        return dataClientPool;
-    }
-
-    public ChannelFuture getChannelFuture() {
-        return channelFuture;
-    }
-
-    public EventLoopGroup getBoss() {
-        return boss;
-    }
-
-    public EventLoopGroup getWorker() {
-        return worker;
-    }
-
-    public ProxyServiceConfig getConfig() {
-        return config;
-    }
-
-    public Channel getProxyChannel() {
-        return proxyChannel;
-    }
-
-    public String getProxyId() {
-        return proxyId;
-    }
-
-    public Map<Integer, String> getPortServiceMap() {
-        return portServiceMap;
-    }
-
-    public List<Channel> getServerChannels() {
-        return serverChannels;
-    }
-
-    public ClientHandler getClientHandler() {
-        return clientHandler;
-    }
-
-    public void refuse(String realClientAddress) {
-        clientHandler.refuse(realClientAddress);
-    }
-
-    
 }

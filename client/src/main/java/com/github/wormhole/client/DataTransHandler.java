@@ -13,7 +13,7 @@ public class DataTransHandler extends SimpleChannelInboundHandler<ByteBuf> {
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, ByteBuf msg) throws Exception {
-        dataClient.getDirectChannel().writeAndFlush(msg);
+        dataClient.getDirectClient().send(msg);
     }
 
 }
