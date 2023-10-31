@@ -10,7 +10,9 @@ import com.github.wormhole.server.Server;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class BuildDataChannelProcessor implements SignalProcessor{
     private Server server;
 
@@ -38,8 +40,11 @@ public class BuildDataChannelProcessor implements SignalProcessor{
                 Channel dataTransChannel = server.getDataTransServer().getDataTransHandler().getDataTransChannel(dataChannelId);
                 if (clientChannel != null && dataTransChannel != null) {
                     server.getDataTransServer().getDataTransHandler().buildDataClientChannelMap(dataTransChannel, clientChannel);
+                    proxyServer.getClientHandler().getDataChannelMap().put(clientChannel, dataTransChannel);
+                    proxyServer.getClientHandler().success(requestId);
+                } else {
+                    proxyServer.getClientHandler().fail(requestId, realClientAddress);
                 }
-                proxyServer.getClientHandler().success(requestId);
             }
         } else {
             if (proxyServer != null) {

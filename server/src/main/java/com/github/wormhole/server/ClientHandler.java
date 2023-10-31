@@ -28,6 +28,8 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
 
     private Map<String, Channel> clientChannelMap = new ConcurrentHashMap<>();
 
+    private Map<Channel, Channel> dataChannelMap = new ConcurrentHashMap<>();
+
     public ClientHandler(ProxyServer proxyServer) {
         this.proxyServer = proxyServer;
     }
@@ -65,17 +67,27 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
                             return dataClient1.send((ByteBuf) msg);
                         }
                     };
-                    RetryUtil.writeLimitNum(connection, msg, 3);
+                    RetryUtil.writeLimitNumThen(connection, msg, 3, () -> {
+                        resMap.remove(string);
+                    });
                 }
             });
         }
     }
 
     public void success(String id) {
-        ChannelPromise remove = resMap.remove(id);
+        ChannelPromise remove = resMap.get(id);
         if (remove != null) {
             remove.setSuccess();
         }
+    }
+
+    public void fail(String id, String address) {
+        ChannelPromise remove = resMap.get(id);
+        if (remove != null) {
+            remove.setFailure(null);
+        }
+        refuse(address);
     }
 
     public ProxyServer getProxyServer() {
@@ -99,6 +111,10 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
         if (channel != null && channel.isActive()) {
             channel.close();
         }
+    }
+
+    public Map<Channel, Channel> getDataChannelMap() {
+        return dataChannelMap;
     }
     
 }

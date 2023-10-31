@@ -34,4 +34,22 @@ public class RetryUtil {
             holder2.t--;
     }
 
+    public static <T> void writeLimitNumThen(Connection conn, T msg, int num, Runnable runnable) {
+        Holder<GenericFutureListener> holder = new Holder<>();
+            Holder<Integer> holder2 = new Holder<>();
+            holder2.t = num;
+            GenericFutureListener listener = f -> {
+                if (!f.isSuccess() && holder2.t > 0) {
+                    Thread.sleep(100);
+                    conn.write(msg).addListener(holder.t);
+                    holder2.t--;
+                } else {
+                    runnable.run();
+                }
+            };
+            holder.t = listener;
+            conn.write(msg).addListener(holder.t);
+            holder2.t--;
+    }
+
 }
