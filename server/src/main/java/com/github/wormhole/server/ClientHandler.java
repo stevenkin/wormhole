@@ -55,16 +55,10 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
         if (channelFuture != null) {
             channelFuture.addListener(f -> {
                 if (f.isSuccess()) {
-                    DataClient dataClient = dataClientMap.get(string);
-                    if (dataClient == null) {
-                        dataClient = proxyServer.getDataClientPool().take();
-                        dataClientMap.put(string, dataClient);
-                    }
-                    DataClient dataClient1 = dataClient;
                     Connection connection = new Connection() {
                         @Override
                         public ChannelFuture write(Object msg) {
-                            return dataClient1.send((ByteBuf) msg);
+                            return null;
                         }
                     };
                     RetryUtil.writeLimitNumThen(connection, msg, 3, () -> {
