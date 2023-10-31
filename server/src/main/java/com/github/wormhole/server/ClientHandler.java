@@ -11,16 +11,22 @@ import com.github.wormhole.common.utils.RetryUtil;
 import com.github.wormhole.serialize.Frame;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.channel.ChannelPromise;
+import io.netty.channel.ChannelHandler.Sharable;
 
+@Sharable
 public class ClientHandler extends ChannelInboundHandlerAdapter {
     private ProxyServer proxyServer;
 
-    private Map<String, ChannelFuture> resMap = new ConcurrentHashMap<>();
+    private Map<String, ChannelPromise> resMap = new ConcurrentHashMap<>();
 
     private Map<String, DataClient> dataClientMap = new ConcurrentHashMap<>();
+
+    private Map<String, Channel> clientChannelMap = new ConcurrentHashMap<>();
 
     public ClientHandler(ProxyServer proxyServer) {
         this.proxyServer = proxyServer;
@@ -36,6 +42,7 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
         int port = localAddress.getPort();
         frame.setServiceKey(proxyServer.getServiceKey(port));
         resMap.put(frame.getRequestId(), ctx.channel().newPromise());
+        clientChannelMap.put(frame.getRealClientAddress(), ctx.channel());
         proxyServer.sendToProxy(frame);
     }
 
@@ -61,6 +68,36 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
                     RetryUtil.writeLimitNum(connection, msg, 3);
                 }
             });
+        }
+    }
+
+    public void success(String id) {
+        ChannelPromise remove = resMap.remove(id);
+        if (remove != null) {
+            remove.setSuccess();
+        }
+    }
+
+    public ProxyServer getProxyServer() {
+        return proxyServer;
+    }
+
+    public Map<String, ChannelPromise> getResMap() {
+        return resMap;
+    }
+
+    public Map<String, DataClient> getDataClientMap() {
+        return dataClientMap;
+    }
+
+    public Map<String, Channel> getClientChannelMap() {
+        return clientChannelMap;
+    }
+
+    public void refuse(String realClientAddress) {
+        Channel channel = clientChannelMap.remove(realClientAddress);
+        if (channel != null && channel.isActive()) {
+            channel.close();
         }
     }
     

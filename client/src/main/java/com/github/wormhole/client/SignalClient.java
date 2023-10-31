@@ -26,12 +26,12 @@ public class SignalClient extends Client<Frame>{
     }
 
     @Override
-    protected void initChannelPipeline(ChannelPipeline pipeline) {
+    public void initChannelPipeline(ChannelPipeline pipeline) {
         pipeline.addLast(new SignalHandler());
     }
 
     @Override
-    protected  ChannelFuture send(Frame msg) {
+    public  ChannelFuture send(Frame msg) {
         String key = System.currentTimeMillis() + RandomStringUtils.randomAlphabetic(8);
         msg.setRequestId(key);
         ChannelPromise newPromise = channel.newPromise();

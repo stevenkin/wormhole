@@ -42,6 +42,8 @@ public class ProxyServer {
 
     private DataClientPool dataClientPool;
 
+    private ClientHandler clientHandler;
+
     public ProxyServer(EventLoopGroup boss, EventLoopGroup worker, String proxyId, ProxyServiceConfig config, Channel channel) {
         this.boss = boss;
         this.worker = worker;
@@ -49,6 +51,7 @@ public class ProxyServer {
         this.proxyChannel = channel;
         this.proxyId = proxyId;
         this.dataClientPool = new DataClientPool();
+        this.clientHandler = new ClientHandler(this);
     }
 
     public void open() throws Exception {
@@ -60,7 +63,7 @@ public class ProxyServer {
                 .childHandler(new ChannelInitializer<NioSocketChannel>() {
                     protected void initChannel(NioSocketChannel ch) throws Exception {
                         ChannelPipeline pipeline = ch.pipeline();
-                        pipeline.addLast(new ClientHandler(ProxyServer.this));
+                        pipeline.addLast(clientHandler);
                         pipeline.addLast(new LoggingHandler());
                     }
                 });
@@ -95,4 +98,46 @@ public class ProxyServer {
     public DataClientPool getDataClientPool() {
         return dataClientPool;
     }
+
+    public ChannelFuture getChannelFuture() {
+        return channelFuture;
+    }
+
+    public EventLoopGroup getBoss() {
+        return boss;
+    }
+
+    public EventLoopGroup getWorker() {
+        return worker;
+    }
+
+    public ProxyServiceConfig getConfig() {
+        return config;
+    }
+
+    public Channel getProxyChannel() {
+        return proxyChannel;
+    }
+
+    public String getProxyId() {
+        return proxyId;
+    }
+
+    public Map<Integer, String> getPortServiceMap() {
+        return portServiceMap;
+    }
+
+    public List<Channel> getServerChannels() {
+        return serverChannels;
+    }
+
+    public ClientHandler getClientHandler() {
+        return clientHandler;
+    }
+
+    public void refuse(String realClientAddress) {
+        clientHandler.refuse(realClientAddress);
+    }
+
+    
 }

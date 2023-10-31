@@ -19,6 +19,8 @@ public class Frame {
 
     private String requestId;
 
+    private String proxyId;
+
     private String serviceKey;
 
     private String realClientAddress;

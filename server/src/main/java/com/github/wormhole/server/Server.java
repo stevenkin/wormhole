@@ -3,6 +3,7 @@ package com.github.wormhole.server;
 import com.github.wormhole.serialize.FrameEncoder;
 import com.github.wormhole.serialize.PackageDecoder;
 import com.github.wormhole.serialize.PackageEncoder;
+import com.github.wormhole.server.processor.BuildDataChannelProcessor;
 import com.github.wormhole.server.processor.ProxyRegisterProcessor;
 
 import java.util.Map;
@@ -31,6 +32,8 @@ import com.github.wormhole.common.config.ProxyServiceConfig;
 public class Server {
     private int port;
 
+    private int dataTransPort;
+
     private ChannelFuture channelFuture;
 
     private EventLoopGroup boss = new NioEventLoopGroup();
@@ -40,14 +43,19 @@ public class Server {
 
     private Map<String, ProxyServer> proxyServerMap = new ConcurrentHashMap<>();
 
-    public Server(int port) {
+    private DataTransServer dataTransServer;
+
+    public Server(int port, int dataTransPort) {
         this.port = port;
+        this.dataTransPort = dataTransPort;
     }
 
     public void open() {
         buildSignalHandler();
-        ServerBootstrap bootstrap = new ServerBootstrap();
+        dataTransServer = new DataTransServer(dataTransPort, boss, worker, this);
+        dataTransServer.open();
 
+        ServerBootstrap bootstrap = new ServerBootstrap();
         bootstrap.group(boss, worker)
                 .channel(NioServerSocketChannel.class)
                 .handler(new LoggingHandler(LogLevel.DEBUG))
@@ -92,7 +100,7 @@ public class Server {
     private void buildSignalHandler() {
         signalHandler = new SignalHandler();
         signalHandler.register(new ProxyRegisterProcessor(this))
-            .register(null)
+            .register(new BuildDataChannelProcessor(this))
             .register(null)
             .register(null);
     }
@@ -107,6 +115,7 @@ public class Server {
         String port = null;
         String redisIp = null;
         Integer redisPort = null;
+        Integer dataTransPort = null;
         if (args != null && args.length > 0) {
             for (int i = 0; i < args.length; i++) {
                 if (StringUtils.isNotEmpty(args[i]) && args[i].equals("--port")) {
@@ -130,11 +139,52 @@ public class Server {
                             redisPort = Integer.parseInt(arg);
                         }
                     }
+                } else if (StringUtils.isNotEmpty(args[i]) && args[i].equals("--dataTransPort")) {
+                    if (i + 1 < args.length) {
+                        String arg = args[i + 1];
+                        if (StringUtils.isNotEmpty(arg)) {
+                            dataTransPort = Integer.parseInt(arg);
+                        }
+                    }
                 }
             }
-            if (port != null  && redisPort != null && StringUtils.isNotEmpty(redisIp)) {
-                new Server(Integer.parseInt(port)).open();
+            if (port != null  && redisPort != null && StringUtils.isNotEmpty(redisIp) && dataTransPort != null) {
+                new Server(Integer.parseInt(port), dataTransPort).open();
             }
         }
     }
+
+    public int getPort() {
+        return port;
+    }
+
+    public int getDataTransPort() {
+        return dataTransPort;
+    }
+
+    public ChannelFuture getChannelFuture() {
+        return channelFuture;
+    }
+
+    public EventLoopGroup getBoss() {
+        return boss;
+    }
+
+    public EventLoopGroup getWorker() {
+        return worker;
+    }
+
+    public SignalHandler getSignalHandler() {
+        return signalHandler;
+    }
+
+    public ProxyServer getProxyServer(String proxyId) {
+        return proxyServerMap.get(proxyId);
+    }
+
+    public DataTransServer getDataTransServer() {
+        return dataTransServer;
+    }
+
+    
 }

@@ -42,9 +42,7 @@ public class ProxyRegisterProcessor implements SignalProcessor{
         Frame frame = new Frame();
         frame.setOpCode(0x10);
         frame.setRequestId(System.currentTimeMillis() + RandomStringUtils.randomAlphabetic(8));
-        ByteBuf buffer = PooledByteBufAllocator.DEFAULT.buffer();
-        buffer.writeCharSequence(proxyId, Charset.forName("UTF-8"));
-        frame.setPayload(buffer);
+        frame.setProxyId(proxyId);
         RetryUtil.write(ctx.channel(), frame);
     }
     
