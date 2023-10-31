@@ -7,7 +7,7 @@ import io.netty.channel.ChannelPipeline;
 import io.netty.buffer.ByteBuf;
 
 public class DataClient extends Client<ByteBuf>{
-    private volatile Channel serviceChannel;
+    private volatile DataClient directClient;
 
     public DataClient(String ip, Integer port) {
         super(ip, port);
@@ -20,14 +20,14 @@ public class DataClient extends Client<ByteBuf>{
 
     @Override
     public ChannelFuture send(ByteBuf msg) {
-        return serviceChannel.writeAndFlush(msg);
+        return channel.writeAndFlush(msg);
     }
 
-    public void refresh(Channel channel) {
-        this.serviceChannel = channel;
+    public void refresh(DataClient directClient) {
+        this.directClient = directClient;
     }
 
-    public Channel getServiceChannel() {
-        return serviceChannel;
+    public DataClient getDirectChannel() {
+        return directClient;
     }
 }

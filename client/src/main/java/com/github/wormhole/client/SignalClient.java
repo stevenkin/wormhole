@@ -21,13 +21,20 @@ import lombok.extern.slf4j.Slf4j;
 public class SignalClient extends Client<Frame>{
     private Map<String, ChannelPromise> reqMap = new ConcurrentHashMap<>();
 
+    private SignalHandler signalHandler = new SignalHandler();
+
     public SignalClient(String ip, Integer port) {
         super(ip, port);
     }
 
+    public SignalClient register(Processor signalProcessor) {
+        this.signalHandler.register(signalProcessor);
+        return this;
+    }
+
     @Override
     public void initChannelPipeline(ChannelPipeline pipeline) {
-        pipeline.addLast(new SignalHandler());
+        pipeline.addLast(signalHandler);
     }
 
     @Override

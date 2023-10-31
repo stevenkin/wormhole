@@ -49,13 +49,11 @@ public abstract class Client<T> {
 
     public abstract ChannelFuture send(T msg);
 
-    public Channel connect(String ip, int port) throws Exception {
+    public Channel connect() throws Exception {
         /**
          * 最多尝试5次和服务端连接
          */
         this.channel = doConnect(ip, port, 5);
-        this.ip = ip;
-        this.port = port;
         return channel;
     }
 
@@ -81,7 +79,7 @@ public abstract class Client<T> {
 
     public void reconnect() throws Exception {
         disconnect();
-        connect(ip, port);
+        connect();
     }
 
     public void shutdown() throws Exception {

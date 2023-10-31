@@ -7,7 +7,7 @@ import java.util.Map;
 
 import org.apache.commons.lang3.RandomStringUtils;
 
-import com.github.wormhole.client.SignalProcessor;
+import com.github.wormhole.client.Processor;
 import com.github.wormhole.common.config.ProxyServiceConfig;
 import com.github.wormhole.common.utils.ConfigLoader;
 import com.github.wormhole.common.utils.RetryUtil;
@@ -22,7 +22,7 @@ import io.netty.channel.ChannelHandlerContext;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class ProxyRegisterProcessor implements SignalProcessor{
+public class ProxyRegisterProcessor implements Processor{
     private Server server;
     
     public ProxyRegisterProcessor(Server server) {

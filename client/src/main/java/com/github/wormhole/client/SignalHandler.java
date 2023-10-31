@@ -12,9 +12,9 @@ import io.netty.channel.ChannelHandler.Sharable;
 
 @Sharable
 public class SignalHandler extends SimpleChannelInboundHandler<Frame>{
-    private List<SignalProcessor> list = new ArrayList<>();
+    private List<Processor> list = new ArrayList<>();
 
-    public SignalHandler register(SignalProcessor signalProcessor) {
+    public SignalHandler register(Processor signalProcessor) {
         this.list.add(signalProcessor);
         return this;
     }
@@ -22,7 +22,7 @@ public class SignalHandler extends SimpleChannelInboundHandler<Frame>{
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, Frame msg) throws Exception {
         try {
-            for (SignalProcessor processor : list) {
+            for (Processor processor : list) {
             if (processor.isSupport(msg)) {
                 processor.process(ctx, msg);
             }

@@ -50,8 +50,6 @@ public class ProxyServer {
         this.config = config;
         this.proxyChannel = channel;
         this.proxyId = proxyId;
-        this.dataClientPool = new DataClientPool();
-        this.clientHandler = new ClientHandler(this);
     }
 
     public void open() throws Exception {

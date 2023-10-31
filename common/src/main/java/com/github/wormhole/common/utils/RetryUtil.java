@@ -18,7 +18,7 @@ public class RetryUtil {
             channel.writeAndFlush(msg).addListener(holder.t);
     }
 
-    public static <T> void writeLimitNum(Connection conn, T msg, int num) {
+    public static <T> void writeLimitTime(Connection conn, T msg, int num) {
             Holder<GenericFutureListener> holder = new Holder<>();
             Holder<Integer> holder2 = new Holder<>();
             holder2.t = num;

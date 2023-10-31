@@ -4,7 +4,7 @@ import com.github.wormhole.serialize.Frame;
 
 import io.netty.channel.ChannelHandlerContext;
 
-public interface SignalProcessor {
+public interface Processor {
     boolean isSupport(Frame frame);
 
     void process(ChannelHandlerContext ctx, Frame msg) throws Exception;
