@@ -41,9 +41,9 @@ public class BuildDataChannelProcessor implements Processor{
                 if (clientChannel != null && dataTransChannel != null) {
                     server.getDataTransServer().getDataTransHandler().buildDataClientChannelMap(dataTransChannel, clientChannel);
                     proxyServer.getClientHandler().getDataChannelMap().put(clientChannel, dataTransChannel);
-                    proxyServer.getClientHandler().success(requestId);
+                    proxyServer.getClientHandler().success(realClientAddress);
                 } else {
-                    proxyServer.getClientHandler().fail(requestId, realClientAddress);
+                    proxyServer.getClientHandler().fail(realClientAddress);
                 }
             }
         } else {

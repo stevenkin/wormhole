@@ -1,5 +1,6 @@
 package com.github.wormhole.proxy.processor;
 
+import java.nio.charset.Charset;
 import java.util.Map;
 
 import com.github.wormhole.client.DataClient;
@@ -9,6 +10,8 @@ import com.github.wormhole.common.config.ProxyServiceConfig.ServiceConfig;
 import com.github.wormhole.proxy.Proxy;
 import com.github.wormhole.serialize.Frame;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.ChannelHandlerContext;
 
 public class DataChannelProcessor implements Processor{
@@ -32,11 +35,20 @@ public class DataChannelProcessor implements Processor{
         DataClient dataClient = proxy.getDataClientPool().take();
         DataClientPool dataClientPool = serviceClientPool.get(serviceKey);
         ServiceConfig serviceConfig = proxy.getConfig().getMap().get(serviceKey);
-        if (dataClient == null) {
+        if (dataClientPool == null) {
             serviceClientPool.put(serviceKey, new DataClientPool(serviceConfig.getIp(), serviceConfig.getPort()));
             dataClientPool = serviceClientPool.get(serviceKey);
         }
         DataClient serviceClient = dataClientPool.take();
+
+        serviceClient.refresh(dataClient);
+        dataClient.refresh(serviceClient);
+        msg.setOpCode(0x20);
+        msg.setProxyId(proxy.getProxyId());
+        ByteBuf buffer = PooledByteBufAllocator.DEFAULT.buffer();
+        buffer.writeCharSequence(dataClient.getChannel().id().toString(), Charset.forName("UTF-8"));
+        msg.setPayload(buffer);
+        ctx.writeAndFlush(msg);
     }
     
 }

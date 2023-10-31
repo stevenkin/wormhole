@@ -43,7 +43,7 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
         InetSocketAddress localAddress = (InetSocketAddress) ctx.channel().localAddress(); 
         int port = localAddress.getPort();
         frame.setServiceKey(proxyServer.getServiceKey(port));
-        resMap.put(frame.getRequestId(), ctx.channel().newPromise());
+        resMap.put(frame.getRealClientAddress(), ctx.channel().newPromise());
         clientChannelMap.put(frame.getRealClientAddress(), ctx.channel());
         proxyServer.sendToProxy(frame);
     }
@@ -57,7 +57,11 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
                 if (f.isSuccess()) {
                     Connection connection = new Connection() {
                         @Override
-                        public ChannelFuture write(Object msg) {
+                        public ChannelFuture write(Object msg1) {
+                            Channel channel = dataChannelMap.get(ctx.channel());
+                            if (channel != null && channel.isActive()) {
+                                return channel.writeAndFlush(msg1);
+                            }
                             return null;
                         }
                     };
@@ -76,8 +80,8 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
         }
     }
 
-    public void fail(String id, String address) {
-        ChannelPromise remove = resMap.get(id);
+    public void fail(String address) {
+        ChannelPromise remove = resMap.get(address);
         if (remove != null) {
             remove.setFailure(null);
         }

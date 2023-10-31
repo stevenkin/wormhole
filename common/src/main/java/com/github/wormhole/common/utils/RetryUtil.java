@@ -1,6 +1,7 @@
 package com.github.wormhole.common.utils;
 
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.util.concurrent.GenericFutureListener;
 
@@ -25,12 +26,18 @@ public class RetryUtil {
             GenericFutureListener listener = f -> {
                 if (!f.isSuccess() && holder2.t > 0) {
                     Thread.sleep(100);
-                    conn.write(msg).addListener(holder.t);
+                    ChannelFuture write = conn.write(msg);
+                    if (write != null) {
+                        write.addListener(holder.t);
+                    }
                     holder2.t--;
                 }
             };
             holder.t = listener;
-            conn.write(msg).addListener(holder.t);
+            ChannelFuture write = conn.write(msg);
+                    if (write != null) {
+                        write.addListener(holder.t);
+                    }
             holder2.t--;
     }
 
@@ -41,14 +48,20 @@ public class RetryUtil {
             GenericFutureListener listener = f -> {
                 if (!f.isSuccess() && holder2.t > 0) {
                     Thread.sleep(100);
-                    conn.write(msg).addListener(holder.t);
+                    ChannelFuture write = conn.write(msg);
+                    if (write != null) {
+                        write.addListener(holder.t);
+                    }
                     holder2.t--;
                 } else {
                     runnable.run();
                 }
             };
             holder.t = listener;
-            conn.write(msg).addListener(holder.t);
+            ChannelFuture write = conn.write(msg);
+                    if (write != null) {
+                        write.addListener(holder.t);
+                    }
             holder2.t--;
     }
 

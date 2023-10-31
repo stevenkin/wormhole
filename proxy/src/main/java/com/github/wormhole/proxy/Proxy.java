@@ -34,6 +34,8 @@ public class Proxy {
 
     private DataClientPool dataClientPool;
 
+    private String proxyId;
+
     public Proxy() throws Exception {
         String configPath = "/config.json";
         this.config = ConfigLoader.load(configPath);
@@ -100,5 +102,7 @@ public class Proxy {
         return dataClientPool;
     }
 
-    
+    public String getProxyId() {
+        return proxyId;
+    }
 }

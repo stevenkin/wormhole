@@ -87,6 +87,30 @@ public abstract class Client<T> {
         clientGroup.shutdownGracefully().syncUninterruptibly();
     }
 
+    public static org.slf4j.Logger getLog() {
+        return log;
+    }
+
+    public Bootstrap getClientBootstrap() {
+        return clientBootstrap;
+    }
+
+    public NioEventLoopGroup getClientGroup() {
+        return clientGroup;
+    }
+
+    public String getIp() {
+        return ip;
+    }
+
+    public Integer getPort() {
+        return port;
+    }
+
+    public Channel getChannel() {
+        return channel;
+    }
+
     
 
     
