@@ -31,12 +31,11 @@ public class DataChannelProcessor implements Processor{
     @Override
     public void process(ChannelHandlerContext ctx, Frame msg) throws Exception {
         String serviceKey = msg.getServiceKey();
-        String realClientAddress = msg.getRealClientAddress();
         DataClient dataClient = proxy.getDataClientPool().take();
         DataClientPool dataClientPool = serviceClientPool.get(serviceKey);
         ServiceConfig serviceConfig = proxy.getConfig().getMap().get(serviceKey);
         if (dataClientPool == null) {
-            serviceClientPool.put(serviceKey, new DataClientPool(serviceConfig.getIp(), serviceConfig.getPort()));
+            serviceClientPool.put(serviceKey, new DataClientPool(serviceConfig.getIp(), serviceConfig.getPort(), 2));
             dataClientPool = serviceClientPool.get(serviceKey);
         }
         DataClient serviceClient = dataClientPool.take();

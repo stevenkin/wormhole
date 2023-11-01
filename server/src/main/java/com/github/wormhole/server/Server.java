@@ -7,6 +7,7 @@ import com.github.wormhole.server.processor.BuildDataChannelProcessor;
 import com.github.wormhole.server.processor.ProxyRegisterProcessor;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -44,6 +45,10 @@ public class Server {
     private Map<String, ProxyServer> proxyServerMap = new ConcurrentHashMap<>();
 
     private DataTransServer dataTransServer;
+
+    private Map<String, String> proxyDataChannelMap = new ConcurrentHashMap<>();
+    
+    private Map<String, Channel> proxyIdChannelMap = new ConcurrentHashMap<>();
 
     public Server(int port, int dataTransPort) {
         this.port = port;
@@ -184,6 +189,18 @@ public class Server {
 
     public DataTransServer getDataTransServer() {
         return dataTransServer;
+    }
+
+    public Map<String, ProxyServer> getProxyServerMap() {
+        return proxyServerMap;
+    }
+
+    public Map<String, String> getDataChannelProxyIdMap() {
+        return proxyDataChannelMap;
+    }
+
+    public Map<String, Channel> getProxyIdChannelMap() {
+        return proxyIdChannelMap;
     }
 
     

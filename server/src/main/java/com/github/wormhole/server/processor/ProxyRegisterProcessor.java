@@ -10,6 +10,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import com.github.wormhole.client.Processor;
 import com.github.wormhole.common.config.ProxyServiceConfig;
 import com.github.wormhole.common.utils.ConfigLoader;
+import com.github.wormhole.common.utils.IDUtil;
 import com.github.wormhole.common.utils.RetryUtil;
 import com.github.wormhole.serialize.Frame;
 import com.github.wormhole.server.ProxyServer;
@@ -39,9 +40,10 @@ public class ProxyRegisterProcessor implements Processor{
         String s = msg.getPayload().toString(StandardCharsets.UTF_8);
         ProxyServiceConfig proxyServiceConfig = ConfigLoader.parse(s);
         String proxyId = server.buildProxyServer(proxyServiceConfig, ctx.channel());
+        server.getProxyIdChannelMap().put(proxyId, ctx.channel());
         Frame frame = new Frame();
         frame.setOpCode(0x10);
-        frame.setRequestId(System.currentTimeMillis() + RandomStringUtils.randomAlphabetic(8));
+        frame.setRequestId(IDUtil.genRequestId());
         frame.setProxyId(proxyId);
         RetryUtil.write(ctx.channel(), frame);
     }

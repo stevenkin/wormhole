@@ -14,6 +14,7 @@ public class Frame {
      * 0x10 代理注册成功
      * -0x1 统一失败码
      * 0x2 创建数据传输通道
+     * 0x3 数据ack
      */
     private int opCode;
 

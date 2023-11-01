@@ -20,6 +20,11 @@ public class SignalHandler extends SimpleChannelInboundHandler<Frame>{
     }
 
     @Override
+    public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
+        ctx.fireChannelRegistered();
+    }
+
+    @Override
     protected void channelRead0(ChannelHandlerContext ctx, Frame msg) throws Exception {
         try {
             for (Processor processor : list) {

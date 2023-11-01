@@ -41,7 +41,7 @@ public class Proxy {
         this.config = ConfigLoader.load(configPath);
         this.serverHost = config.getServerHost();
         this.serverPort = config.getServerPort();
-        this.dataClientPool = new DataClientPool(serverHost, config.getDataTransPort());
+        this.dataClientPool = new DataClientPool(serverHost, config.getDataTransPort(), 1);
         this.signalClient = new SignalClient(serverHost, serverPort);
     }
 
@@ -58,7 +58,6 @@ public class Proxy {
             jsonObject.put(entry.getKey(), JSON.toJSONString(entry.getValue()));
         }
         String string = jsonObject.toJSONString();
-        InetSocketAddress localAddress = (InetSocketAddress) channel.localAddress();
         ByteBuf buffer = PooledByteBufAllocator.DEFAULT.buffer();
         buffer.writeCharSequence(string, StandardCharsets.UTF_8);
         Frame frame = new Frame();

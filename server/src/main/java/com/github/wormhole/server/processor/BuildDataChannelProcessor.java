@@ -1,6 +1,8 @@
 package com.github.wormhole.server.processor;
 
 import java.nio.charset.Charset;
+import java.util.Set;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 import com.github.wormhole.client.Processor;
 import com.github.wormhole.serialize.Frame;
@@ -10,6 +12,7 @@ import com.github.wormhole.server.Server;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.util.internal.ConcurrentSet;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -42,6 +45,7 @@ public class BuildDataChannelProcessor implements Processor{
                     server.getDataTransServer().getDataTransHandler().buildDataClientChannelMap(dataTransChannel, clientChannel);
                     proxyServer.getClientHandler().getDataChannelMap().put(clientChannel, dataTransChannel);
                     proxyServer.getClientHandler().success(realClientAddress);
+                    server.getDataChannelProxyIdMap().put(dataChannelId, proxyId);
                 } else {
                     proxyServer.getClientHandler().fail(realClientAddress);
                 }

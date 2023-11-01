@@ -1,5 +1,6 @@
 package com.github.wormhole.client;
 
+import com.github.wormhole.common.utils.IDUtil;
 import com.github.wormhole.common.utils.NetworkUtil;
 
 import io.netty.bootstrap.Bootstrap;
@@ -15,6 +16,8 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public abstract class Client<T> {
+    private String id;
+
     private Bootstrap clientBootstrap;
 
     private NioEventLoopGroup clientGroup;
@@ -54,6 +57,7 @@ public abstract class Client<T> {
          * 最多尝试5次和服务端连接
          */
         this.channel = doConnect(ip, port, 5);
+        this.id = this.channel.id().toString();
         return channel;
     }
 
@@ -111,7 +115,7 @@ public abstract class Client<T> {
         return channel;
     }
 
-    
-
-    
+    public String getId() {
+        return id;
+    }
 }
