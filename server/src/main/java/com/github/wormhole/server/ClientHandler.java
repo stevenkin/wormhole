@@ -59,25 +59,14 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
             ((ByteBuf)msg).retain();
             channelFuture.addListener(f -> {
                 if (f.isSuccess()) {
-                    Connection connection = new Connection() {
-                        @Override
-                        public ChannelFuture write(Object msg1) {
-                            Channel channel = dataChannelMap.get(ctx.channel());
-                            if (channel != null && channel.isActive()) {
-                                return channel.writeAndFlush(msg1);
-                            }
-                            return null;
-                        }
-                    };
-                    RetryUtil.writeLimitNumThen(connection, msg, 3, () -> {
-                        resMap.remove(string);
-                    });
+                    Channel channel = dataChannelMap.get(ctx.channel());
+                    if (channel != null && channel.isActive()) {
+                        channel.writeAndFlush(msg).addListener(f1 -> {
+                            resMap.remove(string);
+                        });
+                    }
                 }
             });
-            boolean await = channelFuture.await(500, TimeUnit.MILLISECONDS);
-            if (!await) {
-                ((ByteBuf)msg).release();
-            }
         }
     }
 
