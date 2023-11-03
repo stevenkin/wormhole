@@ -119,7 +119,7 @@ public abstract class Client<T> {
     }
 
     public String getId() {
-        return id;
+        return channel.id().toString();
     }
 
     public Context getContext() {

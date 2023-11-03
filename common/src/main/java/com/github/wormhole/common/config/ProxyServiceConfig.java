@@ -39,6 +39,6 @@ public class ProxyServiceConfig {
     }
 
     public void setDataTransPort(Integer integer) {
-        this.dataTransPort = dataTransPort;
+        this.dataTransPort = integer;
     }
 }

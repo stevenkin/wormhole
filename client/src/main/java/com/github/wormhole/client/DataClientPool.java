@@ -33,7 +33,14 @@ public class DataClientPool {
 
     public void init() {
         for (int i = 0; i < 10; i++) {
-            dataClientQueue.add(new DataClient(ip, port, connType, context, this));
+            DataClient dataClient = new DataClient(ip, port, connType, context, this);
+            try {
+                dataClient.connect();
+                dataClientQueue.add(dataClient);
+            } catch (Exception e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
         }
     }
 

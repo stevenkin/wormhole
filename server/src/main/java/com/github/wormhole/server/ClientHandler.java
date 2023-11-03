@@ -4,6 +4,7 @@ import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 import com.github.wormhole.client.DataClient;
 import com.github.wormhole.common.utils.Connection;
@@ -55,6 +56,7 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
         String string = ctx.channel().remoteAddress().toString();
         ChannelFuture channelFuture = resMap.get(string);
         if (channelFuture != null) {
+            ((ByteBuf)msg).retain();
             channelFuture.addListener(f -> {
                 if (f.isSuccess()) {
                     Connection connection = new Connection() {
@@ -72,6 +74,10 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
                     });
                 }
             });
+            boolean await = channelFuture.await(500, TimeUnit.MILLISECONDS);
+            if (!await) {
+                ((ByteBuf)msg).release();
+            }
         }
     }
 

@@ -51,6 +51,7 @@ public class ProxyServer {
         this.proxyChannel = channel;
         this.proxyId = proxyId;
         this.server = server;
+        this.clientHandler = new ClientHandler(this);
     }
 
     public void open() throws Exception {

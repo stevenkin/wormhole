@@ -2,6 +2,7 @@ package com.github.wormhole.proxy.processor;
 
 import java.nio.charset.Charset;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.github.wormhole.client.DataClient;
 import com.github.wormhole.client.DataClientPool;
@@ -12,12 +13,13 @@ import com.github.wormhole.serialize.Frame;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.PooledByteBufAllocator;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 
 public class DataChannelProcessor implements Processor{
     private Proxy proxy;
 
-    private Map<String, DataClientPool> serviceClientPool;
+    private Map<String, DataClientPool> serviceClientPool = new ConcurrentHashMap<>();
 
     public DataChannelProcessor(Proxy proxy) {
         this.proxy = proxy;
@@ -47,11 +49,13 @@ public class DataChannelProcessor implements Processor{
         msg.setOpCode(0x20);
         msg.setProxyId(proxy.getProxyId());
         ByteBuf buffer = PooledByteBufAllocator.DEFAULT.buffer();
-        buffer.writeCharSequence(dataClient.getChannel().id().toString(), Charset.forName("UTF-8"));
+        Channel channel = dataClient.getChannel();
+        String key = channel.localAddress().toString() + "-" + channel.remoteAddress().toString();
+        buffer.writeCharSequence(key, Charset.forName("UTF-8"));
         msg.setPayload(buffer);
         ctx.writeAndFlush(msg);
     }
 
-    
+
     
 }

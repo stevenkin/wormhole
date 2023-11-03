@@ -36,7 +36,8 @@ public class DataTransHandler extends ChannelInboundHandlerAdapter{
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         ctx.fireChannelActive();
         Channel channel = ctx.channel();
-        channalMap.put(channel.id().toString(), channel);
+        String key = channel.remoteAddress().toString() + "-" + channel.localAddress().toString();
+        channalMap.put(key, channel);
         dataCount.put(channel.id().toString(), new AtomicLong(0));
     }
 

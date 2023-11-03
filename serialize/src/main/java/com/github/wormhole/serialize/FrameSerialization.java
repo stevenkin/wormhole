@@ -20,6 +20,14 @@ public class FrameSerialization implements Serialization<Frame> {
         } else {
             byteBuf.writeInt(0);
         }
+        String proxyId = msg.getProxyId();
+        if (StringUtils.isNotEmpty(proxyId)) {
+            byte[] bytes = proxyId.getBytes(StandardCharsets.UTF_8);
+            byteBuf.writeInt(bytes.length);
+            byteBuf.writeBytes(bytes);
+        } else {
+            byteBuf.writeInt(0);
+        }
         String serviceKey = msg.getServiceKey();
         if (StringUtils.isNotEmpty(serviceKey)) {
             byte[] bytes = msg.getServiceKey().getBytes(StandardCharsets.UTF_8);
@@ -55,6 +63,13 @@ public class FrameSerialization implements Serialization<Frame> {
             byteBuf.readBytes(bytes, 0, n);
             String sessionId = new String(bytes, StandardCharsets.UTF_8);
             frame.setRequestId(sessionId);
+        }
+        n = byteBuf.readInt();
+        if (n > 0) {
+            bytes = new byte[n];
+            byteBuf.readBytes(bytes, 0, n);
+            String proxyId = new String(bytes, StandardCharsets.UTF_8);
+            frame.setProxyId(proxyId);
         }
         n = byteBuf.readInt();
         if (n > 0) {

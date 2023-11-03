@@ -17,6 +17,7 @@ import com.github.wormhole.common.utils.RetryUtil;
 import com.github.wormhole.proxy.processor.DataChannelProcessor;
 import com.github.wormhole.proxy.processor.DataTransAckProcessor;
 import com.github.wormhole.proxy.processor.DisconnectClientProcessor;
+import com.github.wormhole.proxy.processor.ProxyRegisterAckProcessor;
 import com.github.wormhole.serialize.Frame;
 
 import io.netty.buffer.ByteBuf;
@@ -53,7 +54,8 @@ public class Proxy implements Context{
     public void start() throws Exception {
         signalClient.register(new DataChannelProcessor(this))
             .register(new DataTransAckProcessor(this))
-            .register(new DisconnectClientProcessor(this));
+            .register(new DisconnectClientProcessor(this))
+            .register(new ProxyRegisterAckProcessor(this));
         channel = signalClient.connect();
         online(channel);
         dataClientPool.init();
@@ -123,4 +125,9 @@ public class Proxy implements Context{
     public String id() {
         return proxyId;
     }
+
+    public void setProxyId(String id) {
+        this.proxyId = id;
+    }
+
 }
