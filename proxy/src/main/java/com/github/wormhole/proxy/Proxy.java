@@ -15,6 +15,8 @@ import com.github.wormhole.common.utils.Connection;
 import com.github.wormhole.common.utils.IDUtil;
 import com.github.wormhole.common.utils.RetryUtil;
 import com.github.wormhole.proxy.processor.DataChannelProcessor;
+import com.github.wormhole.proxy.processor.DataTransAckProcessor;
+import com.github.wormhole.proxy.processor.DisconnectClientProcessor;
 import com.github.wormhole.serialize.Frame;
 
 import io.netty.buffer.ByteBuf;
@@ -49,18 +51,16 @@ public class Proxy implements Context{
     }
 
     public void start() throws Exception {
-        signalClient.register(new DataChannelProcessor(Proxy.this));
+        signalClient.register(new DataChannelProcessor(this))
+            .register(new DataTransAckProcessor(this))
+            .register(new DisconnectClientProcessor(this));
         channel = signalClient.connect();
         online(channel);
         dataClientPool.init();
     }
 
     private void online(Channel channel) {
-        JSONObject jsonObject = new JSONObject();
-        for (Map.Entry<String, ProxyServiceConfig.ServiceConfig> entry : config.getServiceConfigMap().entrySet()){
-            jsonObject.put(entry.getKey(), JSON.toJSONString(entry.getValue()));
-        }
-        String string = jsonObject.toJSONString();
+        String string = ConfigLoader.serialize(config);
         ByteBuf buffer = PooledByteBufAllocator.DEFAULT.buffer();
         buffer.writeCharSequence(string, StandardCharsets.UTF_8);
         Frame frame = new Frame();

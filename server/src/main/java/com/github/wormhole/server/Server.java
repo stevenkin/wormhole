@@ -4,6 +4,7 @@ import com.github.wormhole.serialize.FrameEncoder;
 import com.github.wormhole.serialize.PackageDecoder;
 import com.github.wormhole.serialize.PackageEncoder;
 import com.github.wormhole.server.processor.BuildDataChannelProcessor;
+import com.github.wormhole.server.processor.DisconnectClientPocessor;
 import com.github.wormhole.server.processor.ProxyRegisterProcessor;
 
 import java.util.Map;
@@ -106,8 +107,7 @@ public class Server {
         signalHandler = new SignalHandler();
         signalHandler.register(new ProxyRegisterProcessor(this))
             .register(new BuildDataChannelProcessor(this))
-            .register(null)
-            .register(null);
+            .register(new DisconnectClientPocessor(this));
     }
 
     public void close() {
