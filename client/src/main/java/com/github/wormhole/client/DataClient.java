@@ -16,9 +16,14 @@ public class DataClient extends Client<ByteBuf>{
      */
     private int connType;
 
-    public DataClient(String ip, Integer port, int connType) {
-        super(ip, port);
+    private String peerClientAddress;
+
+    private DataClientPool dataClientPool;
+
+    public DataClient(String ip, Integer port, int connType, Context context, DataClientPool dataClientPool) {
+        super(ip, port, context);
         this.connType = connType;
+        this.dataClientPool = dataClientPool;
     }
 
     @Override
@@ -33,6 +38,10 @@ public class DataClient extends Client<ByteBuf>{
 
     public void refresh(DataClient directClient) {
         this.directClient = directClient;
+    }
+
+    public void revert() {
+        dataClientPool.revert(this);
     }
 
     public DataClient getDirectClient() {
@@ -52,5 +61,34 @@ public class DataClient extends Client<ByteBuf>{
             dataTransHandler.setAck(num);
         });
     }
+
+    public String getPeerClientAddress() {
+        return peerClientAddress;
+    }
+
+    public void setDirectClient(DataClient directClient) {
+        this.directClient = directClient;
+    }
+
+    public void setDataTransHandler(DataTransHandler dataTransHandler) {
+        this.dataTransHandler = dataTransHandler;
+    }
+
+    public void setConnType(int connType) {
+        this.connType = connType;
+    }
+
+    public void setPeerClientAddress(String peerClientAddress) {
+        this.peerClientAddress = peerClientAddress;
+    }
+
+    public DataClientPool getDataClientPool() {
+        return dataClientPool;
+    }
+
+    public void setDataClientPool(DataClientPool dataClientPool) {
+        this.dataClientPool = dataClientPool;
+    }
+    
     
 }

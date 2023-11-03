@@ -32,14 +32,16 @@ public class DataChannelProcessor implements Processor{
     public void process(ChannelHandlerContext ctx, Frame msg) throws Exception {
         String serviceKey = msg.getServiceKey();
         DataClient dataClient = proxy.getDataClientPool().take();
+        dataClient.setPeerClientAddress(msg.getRealClientAddress());
         DataClientPool dataClientPool = serviceClientPool.get(serviceKey);
         ServiceConfig serviceConfig = proxy.getConfig().getMap().get(serviceKey);
         if (dataClientPool == null) {
-            serviceClientPool.put(serviceKey, new DataClientPool(serviceConfig.getIp(), serviceConfig.getPort(), 2));
+            serviceClientPool.put(serviceKey, new DataClientPool(serviceConfig.getIp(), serviceConfig.getPort(), 2, proxy));
             dataClientPool = serviceClientPool.get(serviceKey);
+            dataClientPool.setServiceKey(serviceKey);
         }
         DataClient serviceClient = dataClientPool.take();
-
+        serviceClient.setPeerClientAddress(msg.getRealClientAddress());
         serviceClient.refresh(dataClient);
         dataClient.refresh(serviceClient);
         msg.setOpCode(0x20);
@@ -49,5 +51,7 @@ public class DataChannelProcessor implements Processor{
         msg.setPayload(buffer);
         ctx.writeAndFlush(msg);
     }
+
+    
     
 }

@@ -81,4 +81,8 @@ public class DataTransHandler extends ChannelInboundHandlerAdapter{
             }
         }
     }
+
+    public void clear(String clientAddress) {
+        
+    }
 }

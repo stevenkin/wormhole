@@ -42,12 +42,15 @@ public class ProxyServer {
 
     private ClientHandler clientHandler;
 
-    public ProxyServer(EventLoopGroup boss, EventLoopGroup worker, String proxyId, ProxyServiceConfig config, Channel channel) {
+    private Server server;
+
+    public ProxyServer(EventLoopGroup boss, EventLoopGroup worker, String proxyId, ProxyServiceConfig config, Channel channel, Server server) {
         this.boss = boss;
         this.worker = worker;
         this.config = config;
         this.proxyChannel = channel;
         this.proxyId = proxyId;
+        this.server = server;
     }
 
     public void open() throws Exception {
@@ -131,6 +134,7 @@ public class ProxyServer {
         clientHandler.refuse(realClientAddress);
     }
 
-    
-
+    public Server getServer() {
+        return server;
+    }
 }

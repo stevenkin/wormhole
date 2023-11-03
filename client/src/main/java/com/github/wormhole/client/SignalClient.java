@@ -23,13 +23,18 @@ public class SignalClient extends Client<Frame>{
 
     private SignalHandler signalHandler = new SignalHandler();
 
-    public SignalClient(String ip, Integer port) {
-        super(ip, port);
+    public SignalClient(String ip, Integer port, Context context) {
+        super(ip, port, context);
     }
 
     public SignalClient register(Processor signalProcessor) {
         this.signalHandler.register(signalProcessor);
         return this;
+    }
+
+    public Processor getProcessor(Class clazzClass) {
+        return signalHandler.getProcessor(clazzClass);
+        
     }
 
     @Override

@@ -37,5 +37,14 @@ public class SignalHandler extends SimpleChannelInboundHandler<Frame>{
             RetryUtil.write(ctx.channel(), msg);
         }
     }
+
+    public Processor getProcessor(Class clazzClass) {
+        for (Processor processor : list) {
+            if (processor.getClass().equals(clazzClass)) {
+                return processor;
+            }
+        }
+        return null;
+    }
     
 }

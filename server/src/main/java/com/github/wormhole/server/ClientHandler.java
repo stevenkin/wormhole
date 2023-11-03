@@ -1,6 +1,7 @@
 package com.github.wormhole.server;
 
 import java.net.InetSocketAddress;
+import java.nio.charset.Charset;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -11,6 +12,7 @@ import com.github.wormhole.common.utils.RetryUtil;
 import com.github.wormhole.serialize.Frame;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
@@ -73,6 +75,28 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
         }
     }
 
+    @Override
+    public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
+        ctx.fireChannelReadComplete();
+        String address = ctx.channel().remoteAddress().toString();
+        clear(address);
+        proxyServer.getServer().getDataTransServer().getDataTransHandler().clear(address);
+        Frame frame = new Frame();
+        frame.setOpCode(0x4);
+        frame.setRealClientAddress(ctx.channel().remoteAddress().toString());
+        frame.setRequestId(IDUtil.genRequestId());
+        InetSocketAddress localAddress = (InetSocketAddress) ctx.channel().localAddress(); 
+        int port = localAddress.getPort();
+        frame.setServiceKey(proxyServer.getServiceKey(port));
+        ByteBuf buffer = PooledByteBufAllocator.DEFAULT.buffer();
+        Channel channel = dataChannelMap.get(ctx.channel());
+        if (channel != null) {
+            buffer.writeCharSequence(channel.id().toString(), Charset.forName("UTF-8"));
+            frame.setPayload(buffer);
+            proxyServer.sendToProxy(frame);
+        }
+    }
+
     public void success(String id) {
         ChannelPromise remove = resMap.get(id);
         if (remove != null) {
@@ -113,6 +137,10 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
 
     public Map<Channel, Channel> getDataChannelMap() {
         return dataChannelMap;
+    }
+
+    public void clear(String clientAddress) {
+
     }
     
 }

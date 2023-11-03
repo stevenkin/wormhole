@@ -6,6 +6,7 @@ import java.util.Map;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.github.wormhole.client.Context;
 import com.github.wormhole.client.DataClientPool;
 import com.github.wormhole.client.SignalClient;
 import com.github.wormhole.common.config.ProxyServiceConfig;
@@ -21,7 +22,9 @@ import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 
-public class Proxy {
+public class Proxy implements Context{
+    private static Proxy proxy;
+
     private String serverHost;
 
     private Integer serverPort;
@@ -41,8 +44,8 @@ public class Proxy {
         this.config = ConfigLoader.load(configPath);
         this.serverHost = config.getServerHost();
         this.serverPort = config.getServerPort();
-        this.dataClientPool = new DataClientPool(serverHost, config.getDataTransPort(), 1);
-        this.signalClient = new SignalClient(serverHost, serverPort);
+        this.dataClientPool = new DataClientPool(serverHost, config.getDataTransPort(), 1, this);
+        this.signalClient = new SignalClient(serverHost, serverPort, this);
     }
 
     public void start() throws Exception {
@@ -73,7 +76,7 @@ public class Proxy {
     }
 
     public static void main(String[] args) throws Exception {
-        Proxy proxy = new Proxy();
+        proxy = new Proxy();
         proxy.start();
     }
 
@@ -102,6 +105,22 @@ public class Proxy {
     }
 
     public String getProxyId() {
+        return proxyId;
+    }
+
+    @Override
+    public void write(Object msg) {
+        signalClient.send((Frame) msg);
+    }
+
+    @Override
+    public Object read() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'read'");
+    }
+
+    @Override
+    public String id() {
         return proxyId;
     }
 }

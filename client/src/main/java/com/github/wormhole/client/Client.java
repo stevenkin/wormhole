@@ -28,9 +28,12 @@ public abstract class Client<T> {
 
     protected Channel channel;
 
-    public Client(String ip, Integer port) {
+    private Context context;
+
+    public Client(String ip, Integer port, Context context) {
         this.ip = ip;
         this.port = port;
+        this.context = context;
         this.clientBootstrap = new Bootstrap();
         this.clientGroup = new NioEventLoopGroup();
         clientBootstrap.group(clientGroup).channel(NioSocketChannel.class)
@@ -118,4 +121,9 @@ public abstract class Client<T> {
     public String getId() {
         return id;
     }
+
+    public Context getContext() {
+        return context;
+    }
+    
 }

@@ -4,6 +4,9 @@ import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
+import com.github.wormhole.common.utils.IDUtil;
+import com.github.wormhole.serialize.Frame;
+
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
@@ -36,14 +39,29 @@ public class DataTransHandler extends SimpleChannelInboundHandler<ByteBuf> {
 
     @Override
     public void channelReadComplete(ChannelHandlerContext ctx) {
+        if (dataClient.getConnType() != 2) {
+            return;
+        }
+        Frame closePeer = closePeer();
        if (sendSize == ackSize) {
+            dataClient.getContext().write(closePeer);
             return;
        }
        ChannelPromise newPromise = ctx.channel().newPromise();
        queue.add(newPromise);
        newPromise.addListener(f -> {
-            ctx.channel().close();
+            dataClient.getContext().write(closePeer);
        });
+    }
+
+    private Frame closePeer() {
+        Frame frame = new Frame();
+        frame.setOpCode(0x4);
+        frame.setProxyId(dataClient.getContext().id());
+        frame.setServiceKey(dataClient.getDataClientPool().getServiceKey());
+        frame.setRealClientAddress(dataClient.getPeerClientAddress());
+        frame.setRequestId(IDUtil.genRequestId());
+        return frame;
     }
 
     public void setAck(long num) {

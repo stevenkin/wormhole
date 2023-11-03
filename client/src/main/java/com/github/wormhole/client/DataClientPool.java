@@ -19,16 +19,21 @@ public class DataClientPool {
 
     private Map<String, DataClient> assignedDataClients = new ConcurrentHashMap<>();
 
-    public DataClientPool(String ip, Integer port, int connType) {
+    private Context context;
+
+    private String serviceKey;
+
+    public DataClientPool(String ip, Integer port, int connType, Context context) {
         this.ip = ip;
         this.port = port;
         this.connType = connType;
+        this.context = context;
     }
     private Queue<DataClient> dataClientQueue = new LinkedBlockingQueue<>();
 
     public void init() {
         for (int i = 0; i < 10; i++) {
-            dataClientQueue.add(new DataClient(ip, port, connType));
+            dataClientQueue.add(new DataClient(ip, port, connType, context, this));
         }
     }
 
@@ -36,7 +41,7 @@ public class DataClientPool {
         DataClient client = dataClientQueue.poll();
         if (client == null) {
             for (;;) {
-                DataClient dataClient = new DataClient(ip, port, connType);
+                DataClient dataClient = new DataClient(ip, port, connType, context, this);
                 try {
                     dataClient.connect();
                     dataClientQueue.add(dataClient);
@@ -62,4 +67,37 @@ public class DataClientPool {
     public DataClient getAssignedDataClient(String id) {
         return assignedDataClients.get(id);
     }
+
+    public String getIp() {
+        return ip;
+    }
+
+    public Integer getPort() {
+        return port;
+    }
+
+    public int getConnType() {
+        return connType;
+    }
+
+    public Map<String, DataClient> getAssignedDataClients() {
+        return assignedDataClients;
+    }
+
+    public Context getContext() {
+        return context;
+    }
+
+    public String getServiceKey() {
+        return serviceKey;
+    }
+
+    public Queue<DataClient> getDataClientQueue() {
+        return dataClientQueue;
+    }
+
+    public void setServiceKey(String serviceKey) {
+        this.serviceKey = serviceKey;
+    }
+    
 }
