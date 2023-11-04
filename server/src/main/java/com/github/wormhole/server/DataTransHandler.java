@@ -24,8 +24,6 @@ public class DataTransHandler extends ChannelInboundHandlerAdapter{
 
     private Map<Channel, Channel> clientChannelMap = new ConcurrentHashMap<>();
 
-    private Map<String, AtomicLong> dataCount = new ConcurrentHashMap<>();
-
     private Server server;
 
     public DataTransHandler(Server server) {
@@ -38,7 +36,6 @@ public class DataTransHandler extends ChannelInboundHandlerAdapter{
         Channel channel = ctx.channel();
         String key = channel.remoteAddress().toString() + "-" + channel.localAddress().toString();
         channalMap.put(key, channel);
-        dataCount.put(channel.id().toString(), new AtomicLong(0));
     }
 
     @Override
@@ -46,7 +43,6 @@ public class DataTransHandler extends ChannelInboundHandlerAdapter{
         ctx.fireChannelInactive();
         Channel channel = ctx.channel();
         channalMap.remove(channel.id().toString());
-        dataCount.remove(channel.id().toString());
     }
 
     public Channel getDataTransChannel(String channelId) {
@@ -62,24 +58,9 @@ public class DataTransHandler extends ChannelInboundHandlerAdapter{
         Channel channel = ctx.channel();
         Channel channel2 = clientChannelMap.get(channel);
         channel2.writeAndFlush(msg);
-        AtomicLong long1 = dataCount.get(channel.id().toString());
-        if (long1 != null) {
-            long num = long1.addAndGet(((ByteBuf) msg).readableBytes());
-            String string = server.getDataChannelProxyIdMap().get(channel.id().toString());
-            if (string != null) {
-                 Channel channel3 = server.getProxyIdChannelMap().get(string);   
-                 Frame frame = new Frame();
-                 frame.setOpCode(0x3);
-                 frame.setProxyId(string);   
-                 ByteBuf buffer = PooledByteBufAllocator.DEFAULT.buffer();
-                 JSONObject jsonObject = new JSONObject();
-                 jsonObject.put("channelId", channel.id().toString());
-                 jsonObject.put("ackSize", num);
-                 String jsonString = jsonObject.toJSONString();
-                 buffer.writeCharSequence(jsonString, Charset.forName("UTF-8"));
-                 frame.setPayload(buffer);
-                 channel3.writeAndFlush(frame);
-            }
+        String string = server.getDataChannelProxyIdMap().get(channel.id().toString());
+        if (string != null) {
+             Channel channel3 = server.getProxyIdChannelMap().get(string);   
         }
     }
 

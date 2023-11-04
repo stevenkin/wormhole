@@ -1,11 +1,16 @@
 package com.github.wormhole.server;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+import com.github.wormhole.client.ack.AckHandler;
 import com.github.wormhole.serialize.FrameDecoder;
 import com.github.wormhole.serialize.FrameEncoder;
 import com.github.wormhole.serialize.PackageDecoder;
 import com.github.wormhole.serialize.PackageEncoder;
 
 import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
@@ -26,6 +31,8 @@ public class DataTransServer {
 
     private DataTransHandler dataTransHandler;
 
+    private Map<Channel, AckHandler> ackHandlerMap;
+
     private Server server;
 
     public DataTransServer(int port, EventLoopGroup boss, EventLoopGroup worker, Server server) {
@@ -34,6 +41,7 @@ public class DataTransServer {
         this.worker = worker;
         this.server = server;
         this.dataTransHandler = new DataTransHandler(server);
+        this.ackHandlerMap = new ConcurrentHashMap<>();
     }
 
     public void open() {
@@ -46,6 +54,9 @@ public class DataTransServer {
                     protected void initChannel(NioSocketChannel ch) throws Exception {
                         ChannelPipeline pipeline = ch.pipeline();
                         pipeline.addLast(dataTransHandler);
+                        AckHandler ackHandler = new AckHandler(true);
+                        ackHandlerMap.put(ch, ackHandler);
+                        pipeline.addLast(ackHandler);
                         pipeline.addLast(new LoggingHandler());
                     }
                 });
@@ -93,4 +104,13 @@ public class DataTransServer {
     public DataTransHandler getDataTransHandler() {
         return dataTransHandler;
     }
+
+    public Map<Channel, AckHandler> getAckHandlerMap() {
+        return ackHandlerMap;
+    }
+
+    public Server getServer() {
+        return server;
+    }
+    
 }

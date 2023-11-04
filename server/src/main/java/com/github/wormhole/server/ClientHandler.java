@@ -86,7 +86,7 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
         ByteBuf buffer = PooledByteBufAllocator.DEFAULT.buffer();
         Channel channel = dataChannelMap.get(ctx.channel());
         if (channel != null) {
-            buffer.writeCharSequence(channel.id().toString(), Charset.forName("UTF-8"));
+            buffer.writeCharSequence(channel.remoteAddress().toString() + "-" + channel.localAddress().toString(), Charset.forName("UTF-8"));
             frame.setPayload(buffer);
             proxyServer.sendToProxy(frame);
         }

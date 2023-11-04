@@ -2,11 +2,11 @@
   "http": {
     "ip": "127.0.0.1",
     "port": "8080",
-    "mappingPort": "19000"
+    "mappingPort": "8090"
   },
   "serverHost": "127.0.0.1",
   "serverPort": 9000,
-  "dataTransPort": 9010,
+  "dataTransPort": 9100,
   "username":"wjg",
   "password": "123456"
 }

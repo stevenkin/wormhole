@@ -4,6 +4,9 @@ import io.netty.channel.Channel;
 
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelPipeline;
+
+import com.github.wormhole.client.ack.AckHandler;
+
 import io.netty.buffer.ByteBuf;
 
 public class DataClient extends Client<ByteBuf>{
@@ -20,15 +23,21 @@ public class DataClient extends Client<ByteBuf>{
 
     private DataClientPool dataClientPool;
 
+    private AckHandler ackHandler;
+
     public DataClient(String ip, Integer port, int connType, Context context, DataClientPool dataClientPool) {
         super(ip, port, context);
         this.connType = connType;
         this.dataClientPool = dataClientPool;
+        this.ackHandler = new AckHandler(context, context.id(), dataClientPool.getServiceKey(), false);
     }
 
     @Override
     public void initChannelPipeline(ChannelPipeline pipeline) {
         pipeline.addLast(dataTransHandler);
+        if (connType == 1) {
+            pipeline.addLast(ackHandler);
+        }
     }
 
     @Override

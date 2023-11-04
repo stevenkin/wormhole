@@ -5,6 +5,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 import com.github.wormhole.client.Processor;
+import com.github.wormhole.client.ack.AckHandler;
 import com.github.wormhole.serialize.Frame;
 import com.github.wormhole.server.ProxyServer;
 import com.github.wormhole.server.Server;
@@ -46,6 +47,11 @@ public class BuildDataChannelProcessor implements Processor{
                     proxyServer.getClientHandler().getDataChannelMap().put(clientChannel, dataTransChannel);
                     proxyServer.getClientHandler().success(realClientAddress);
                     server.getDataChannelProxyIdMap().put(dataChannelId, proxyId);
+
+                    AckHandler ackHandler = server.getDataTransServer().getAckHandlerMap().get(dataTransChannel);
+                    if (ackHandler != null) {
+                        
+                    }
                 } else {
                     proxyServer.getClientHandler().fail(realClientAddress);
                 }
