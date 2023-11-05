@@ -37,6 +37,7 @@ public class BuildDataChannelProcessor implements Processor{
         String proxyId = msg.getProxyId();
         ByteBuf payload = msg.getPayload();
         ProxyServer proxyServer = server.getProxyServer(proxyId);
+        String serviceKey = msg.getServiceKey();
         if (opCode == 0x20) {
             String dataChannelId = payload.getCharSequence(0, payload.readableBytes(), Charset.forName("UTF-8")).toString();
             if (proxyServer != null) {
@@ -45,13 +46,14 @@ public class BuildDataChannelProcessor implements Processor{
                 if (clientChannel != null && dataTransChannel != null) {
                     server.getDataTransServer().getDataTransHandler().buildDataClientChannelMap(dataTransChannel, clientChannel);
                     proxyServer.getClientHandler().getDataChannelMap().put(clientChannel, dataTransChannel);
-                    proxyServer.getClientHandler().success(realClientAddress);
                     server.getDataChannelProxyIdMap().put(dataChannelId, proxyId);
 
                     AckHandler ackHandler = server.getDataTransServer().getAckHandlerMap().get(dataTransChannel);
                     if (ackHandler != null) {
-                        
+                        SignalChannelContext signalChannelContext = new SignalChannelContext(server.getProxyIdChannelMap().get(proxyId));
+                        ackHandler.reflush(signalChannelContext, proxyId, dataChannelId);
                     }
+                    proxyServer.getClientHandler().success(realClientAddress);
                 } else {
                     proxyServer.getClientHandler().fail(realClientAddress);
                 }
