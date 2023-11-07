@@ -3,6 +3,7 @@ package com.github.wormhole.proxy.processor;
 import java.nio.charset.Charset;
 
 import com.github.wormhole.client.DataClient;
+import com.github.wormhole.client.DataClientPool;
 import com.github.wormhole.client.Processor;
 import com.github.wormhole.proxy.Proxy;
 import com.github.wormhole.serialize.Frame;
@@ -26,11 +27,14 @@ public class DisconnectClientProcessor implements Processor{
     @Override
     public void process(ChannelHandlerContext ctx, Frame msg) throws Exception {
         ByteBuf payload = msg.getPayload();
-        String string = payload.readCharSequence(payload.readableBytes(), Charset.forName("UTF-8")).toString();
-        DataClient assignedDataClient = proxy.getDataClientPool().getAssignedDataClient(string);
-        if (assignedDataClient != null) {
-            ((SocketChannel)(assignedDataClient.getDirectClient().getChannel())).shutdownOutput();
-            assignedDataClient.revert();;
+        String realClientAddress = msg.getRealClientAddress();
+        String serviceKey = msg.getServiceKey();
+        DataClientPool dataClientPool = proxy.getDataChannelProcessor().getServiceClientPool().get(serviceKey);
+        if (dataClientPool != null) {
+            DataClient assignedDataClient = dataClientPool.getAssignedDataClient(realClientAddress);
+            if (assignedDataClient != null) {
+                ((SocketChannel)(assignedDataClient.getChannel())).shutdownOutput();
+            }
         }
     }
     

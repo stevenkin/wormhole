@@ -32,6 +32,8 @@ public class AckHandler extends ChannelDuplexHandler{
 
     private String peerClientAddress;
 
+    private ChannelPromise promise;
+
     public AckHandler(Channel channel,Context context, String proxyId, String serviceKey, String peerClientAddress) {
         this.context = context;
         this.proxyId = proxyId;
@@ -69,6 +71,21 @@ public class AckHandler extends ChannelDuplexHandler{
     public void setAck(long ack) {
         channel.eventLoop().submit(() -> {
             AckHandler.this.ackCount = ack;
+            if (AckHandler.this.ackCount == AckHandler.this.readByteCount) {
+                if (promise != null) {
+                    promise.setSuccess();
+                } 
+            }
         });
     }
+
+    public boolean isAckComplate() {
+        return ackCount == readByteCount;
+    }
+
+    public void setPromise(ChannelPromise promise) {
+        this.promise = promise;
+    }
+
+    
 }

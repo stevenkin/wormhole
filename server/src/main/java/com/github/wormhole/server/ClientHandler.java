@@ -7,6 +7,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 import com.github.wormhole.client.DataClient;
+import com.github.wormhole.client.ack.AckHandler;
 import com.github.wormhole.common.utils.Connection;
 import com.github.wormhole.common.utils.IDUtil;
 import com.github.wormhole.common.utils.RetryUtil;
@@ -75,20 +76,28 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
         ctx.fireChannelReadComplete();
         String address = ctx.channel().remoteAddress().toString();
         clear(address);
+        
         proxyServer.getServer().getDataTransServer().getDataTransHandler().clear(address);
+
         Frame frame = new Frame();
         frame.setOpCode(0x4);
-        frame.setRealClientAddress(ctx.channel().remoteAddress().toString());
+        frame.setRealClientAddress(address);
         frame.setRequestId(IDUtil.genRequestId());
         InetSocketAddress localAddress = (InetSocketAddress) ctx.channel().localAddress(); 
         int port = localAddress.getPort();
         frame.setServiceKey(proxyServer.getServiceKey(port));
-        ByteBuf buffer = PooledByteBufAllocator.DEFAULT.buffer();
-        Channel channel = dataChannelMap.get(ctx.channel());
-        if (channel != null) {
-            buffer.writeCharSequence(channel.remoteAddress().toString() + "-" + channel.localAddress().toString(), Charset.forName("UTF-8"));
-            frame.setPayload(buffer);
-            proxyServer.sendToProxy(frame);
+        
+        AckHandler ackHandler = proxyServer.getAckHandlerMap().get(ctx.channel());
+        if (ackHandler != null) {
+            if (ackHandler.isAckComplate()) {
+                proxyServer.sendToProxy(frame);
+                return;
+           }
+           ChannelPromise newPromise = ctx.channel().newPromise();
+           ackHandler.setPromise(newPromise);
+           newPromise.addListener(f -> {
+                proxyServer.sendToProxy(frame);
+           });   
         }
     }
 
