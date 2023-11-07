@@ -30,11 +30,14 @@ public class AckHandler extends ChannelDuplexHandler{
 
     private Channel channel;
 
-    public AckHandler(Channel channel,Context context, String proxyId, String serviceKey) {
+    private String peerClientAddress;
+
+    public AckHandler(Channel channel,Context context, String proxyId, String serviceKey, String peerClientAddress) {
         this.context = context;
         this.proxyId = proxyId;
         this.serviceKey = serviceKey;
         this.channel = channel;
+        this.peerClientAddress = peerClientAddress;
     }
 
     @Override
@@ -55,9 +58,7 @@ public class AckHandler extends ChannelDuplexHandler{
         frame.setServiceKey(serviceKey);
         ByteBuf buffer = PooledByteBufAllocator.DEFAULT.buffer();
         JSONObject jsonObject = new JSONObject();
-        Channel channel = ctx.channel();
-        String channelId = channel.remoteAddress().toString();
-        jsonObject.put("channelId", channelId);
+        jsonObject.put("channelId", peerClientAddress);
         jsonObject.put("ackSize", readByteCount);
         String jsonString = jsonObject.toJSONString();
         buffer.writeCharSequence(jsonString, Charset.forName("UTF-8"));

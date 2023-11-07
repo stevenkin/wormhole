@@ -38,7 +38,7 @@ public class DataClient extends Client<ByteBuf>{
     public void initChannelPipeline(ChannelPipeline pipeline) {
         pipeline.addLast(dataTransHandler);
         if (connType == 2) {
-            this.ackHandler = new AckHandler(channel, context, context.id(), dataClientPool.getServiceKey());
+            this.ackHandler = new AckHandler(channel, context, context.id(), dataClientPool.getServiceKey(), peerClientAddress);
             pipeline.addLast(ackHandler);
         }
     }

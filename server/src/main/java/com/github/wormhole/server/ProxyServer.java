@@ -69,7 +69,7 @@ public class ProxyServer {
                         ChannelPipeline pipeline = ch.pipeline();
                         int port = ch.localAddress().getPort();
                         String string = portServiceMap.get(port);
-                        AckHandler ackHandler = new AckHandler(ch, new SignalChannelContext(proxyChannel), proxyId, string);
+                        AckHandler ackHandler = new AckHandler(ch, new SignalChannelContext(proxyChannel), proxyId, string, ch.remoteAddress().toString());
                         ackHandlerMap.put(ch, ackHandler);
                         pipeline.addLast(clientHandler);
                         pipeline.addLast(ackHandler);
