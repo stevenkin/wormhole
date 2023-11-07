@@ -33,26 +33,25 @@ public class DataTransHandler extends SimpleChannelInboundHandler<ByteBuf> {
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, ByteBuf msg) throws Exception {
-        sendSize += msg.readableBytes();
         dataClient.getDirectClient().send(msg);
     }
 
-    @Override
-    public void channelReadComplete(ChannelHandlerContext ctx) {
-        if (dataClient.getConnType() != 2) {
-            return;
-        }
-        Frame closePeer = closePeer();
-       if (sendSize == ackSize) {
-            dataClient.getContext().write(closePeer);
-            return;
-       }
-       ChannelPromise newPromise = ctx.channel().newPromise();
-       queue.add(newPromise);
-       newPromise.addListener(f -> {
-            dataClient.getContext().write(closePeer);
-       });
-    }
+    // @Override
+    // public void channelReadComplete(ChannelHandlerContext ctx) {
+    //     if (dataClient.getConnType() != 2) {
+    //         return;
+    //     }
+    //     Frame closePeer = closePeer();
+    //    if (sendSize == ackSize) {
+    //         dataClient.getContext().write(closePeer);
+    //         return;
+    //    }
+    //    ChannelPromise newPromise = ctx.channel().newPromise();
+    //    queue.add(newPromise);
+    //    newPromise.addListener(f -> {
+    //         dataClient.getContext().write(closePeer);
+    //    });
+    // }
 
     private Frame closePeer() {
         Frame frame = new Frame();
@@ -64,13 +63,13 @@ public class DataTransHandler extends SimpleChannelInboundHandler<ByteBuf> {
         return frame;
     }
 
-    public void setAck(long num) {
-        this.ackSize = num;
-        if (ackSize == sendSize) {
-            ChannelPromise promise = queue.poll();
-            if (promise != null) {
-                promise.setSuccess();
-            }
-        }
-    }
+    // public void setAck(long num) {
+    //     this.ackSize = num;
+    //     if (ackSize == sendSize) {
+    //         ChannelPromise promise = queue.poll();
+    //         if (promise != null) {
+    //             promise.setSuccess();
+    //         }
+    //     }
+    // }
 }

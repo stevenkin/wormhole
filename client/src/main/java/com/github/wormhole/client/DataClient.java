@@ -25,17 +25,20 @@ public class DataClient extends Client<ByteBuf>{
 
     private AckHandler ackHandler;
 
+    private Context context;
+
     public DataClient(String ip, Integer port, int connType, Context context, DataClientPool dataClientPool) {
         super(ip, port, context);
         this.connType = connType;
         this.dataClientPool = dataClientPool;
-        this.ackHandler = new AckHandler(context, context.id(), dataClientPool.getServiceKey(), false);
+        this.context = context;
     }
 
     @Override
     public void initChannelPipeline(ChannelPipeline pipeline) {
         pipeline.addLast(dataTransHandler);
-        if (connType == 1) {
+        if (connType == 2) {
+            this.ackHandler = new AckHandler(channel, context, context.id(), dataClientPool.getServiceKey());
             pipeline.addLast(ackHandler);
         }
     }
@@ -65,11 +68,11 @@ public class DataClient extends Client<ByteBuf>{
         return dataTransHandler;
     }
 
-    public void setAck(long num) {
-        channel.eventLoop().submit(() -> {
-            dataTransHandler.setAck(num);
-        });
-    }
+    // public void setAck(long num) {
+    //     channel.eventLoop().submit(() -> {
+    //         dataTransHandler.setAck(num);
+    //     });
+    // }
 
     public String getPeerClientAddress() {
         return peerClientAddress;
@@ -98,6 +101,22 @@ public class DataClient extends Client<ByteBuf>{
     public void setDataClientPool(DataClientPool dataClientPool) {
         this.dataClientPool = dataClientPool;
     }
-    
-    
+
+    @Override
+    public String getId() {
+        if (connType == 1) {
+            return channel.localAddress().toString() + "-" + channel.remoteAddress().toString();
+        } else if (connType == 2) {
+            return peerClientAddress;
+        }
+        return null;
+    }
+
+    public AckHandler getAckHandler() {
+        return ackHandler;
+    }
+
+    public Context getContext() {
+        return context;
+    }
 }

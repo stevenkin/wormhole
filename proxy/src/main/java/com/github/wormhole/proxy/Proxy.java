@@ -42,6 +42,10 @@ public class Proxy implements Context{
 
     private String proxyId;
 
+    private DataTransAckProcessor dataTransAckProcessor;
+
+    private DataChannelProcessor dataChannelProcessor;
+
     public Proxy() throws Exception {
         String configPath = "/config.json";
         this.config = ConfigLoader.load(configPath);
@@ -52,8 +56,10 @@ public class Proxy implements Context{
     }
 
     public void start() throws Exception {
-        signalClient.register(new DataChannelProcessor(this))
-            .register(new DataTransAckProcessor(this))
+        this.dataTransAckProcessor = new DataTransAckProcessor(this);
+        this.dataChannelProcessor = new DataChannelProcessor(this);
+        signalClient.register(dataChannelProcessor)
+            .register(dataTransAckProcessor)
             .register(new DisconnectClientProcessor(this))
             .register(new ProxyRegisterAckProcessor(this));
         channel = signalClient.connect();
@@ -129,5 +135,18 @@ public class Proxy implements Context{
     public void setProxyId(String id) {
         this.proxyId = id;
     }
+
+    public static Proxy getProxy() {
+        return proxy;
+    }
+
+    public DataTransAckProcessor getDataTransAckProcessor() {
+        return dataTransAckProcessor;
+    }
+
+    public DataChannelProcessor getDataChannelProcessor() {
+        return dataChannelProcessor;
+    }
+    
 
 }

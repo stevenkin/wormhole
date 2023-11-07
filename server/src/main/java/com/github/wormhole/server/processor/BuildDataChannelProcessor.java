@@ -47,12 +47,6 @@ public class BuildDataChannelProcessor implements Processor{
                     server.getDataTransServer().getDataTransHandler().buildDataClientChannelMap(dataTransChannel, clientChannel);
                     proxyServer.getClientHandler().getDataChannelMap().put(clientChannel, dataTransChannel);
                     server.getDataChannelProxyIdMap().put(dataChannelId, proxyId);
-
-                    AckHandler ackHandler = server.getDataTransServer().getAckHandlerMap().get(dataTransChannel);
-                    if (ackHandler != null) {
-                        SignalChannelContext signalChannelContext = new SignalChannelContext(server.getProxyIdChannelMap().get(proxyId));
-                        ackHandler.reflush(signalChannelContext, proxyId, dataChannelId);
-                    }
                     proxyServer.getClientHandler().success(realClientAddress);
                 } else {
                     proxyServer.getClientHandler().fail(realClientAddress);

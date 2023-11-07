@@ -56,6 +56,11 @@ public class DataChannelProcessor implements Processor{
         ctx.writeAndFlush(msg);
     }
 
+    public Proxy getProxy() {
+        return proxy;
+    }
 
-    
+    public Map<String, DataClientPool> getServiceClientPool() {
+        return serviceClientPool;
+    }
 }

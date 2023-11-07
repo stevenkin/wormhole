@@ -5,6 +5,7 @@ import java.nio.charset.Charset;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.github.wormhole.client.DataClient;
+import com.github.wormhole.client.DataClientPool;
 import com.github.wormhole.client.Processor;
 import com.github.wormhole.proxy.Proxy;
 import com.github.wormhole.serialize.Frame;
@@ -28,13 +29,17 @@ public class DataTransAckProcessor implements Processor{
     public void process(ChannelHandlerContext ctx, Frame msg) throws Exception {
         String proxyId = msg.getProxyId();
         ByteBuf payload = msg.getPayload();
+        String serviceKey = msg.getServiceKey();
         String string = payload.readCharSequence(payload.readableBytes(), Charset.forName("UTF-8")).toString();
         JSONObject parseObject = JSONObject.parseObject(string);
         String string2 = parseObject.getString("channelId");
         Long long1 = parseObject.getLong("ackSize");
-        DataClient assignedDataClient = proxy.getDataClientPool().getAssignedDataClient(string2);
-        if (assignedDataClient != null) {
-            assignedDataClient.setAck(long1);
+        DataClientPool dataClientPool = proxy.getDataChannelProcessor().getServiceClientPool().get(serviceKey);
+        if (dataClientPool != null) {
+            DataClient assignedDataClient = dataClientPool.getAssignedDataClient(string2);
+            if (assignedDataClient != null) {
+                assignedDataClient.getAckHandler().setAck(long1);
+            }
         }
     }
     

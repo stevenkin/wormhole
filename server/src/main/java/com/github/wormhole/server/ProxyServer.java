@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.github.wormhole.client.DataClientPool;
+import com.github.wormhole.client.ack.AckHandler;
 import com.github.wormhole.common.config.ProxyServiceConfig;
 import com.github.wormhole.common.config.ProxyServiceConfig.ServiceConfig;
 import com.github.wormhole.common.utils.RetryUtil;
@@ -14,6 +15,7 @@ import com.github.wormhole.serialize.FrameDecoder;
 import com.github.wormhole.serialize.FrameEncoder;
 import com.github.wormhole.serialize.PackageDecoder;
 import com.github.wormhole.serialize.PackageEncoder;
+import com.github.wormhole.server.processor.SignalChannelContext;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
@@ -42,6 +44,8 @@ public class ProxyServer {
 
     private ClientHandler clientHandler;
 
+    private Map<Channel, AckHandler> ackHandlerMap;
+
     private Server server;
 
     public ProxyServer(EventLoopGroup boss, EventLoopGroup worker, String proxyId, ProxyServiceConfig config, Channel channel, Server server) {
@@ -63,7 +67,12 @@ public class ProxyServer {
                 .childHandler(new ChannelInitializer<NioSocketChannel>() {
                     protected void initChannel(NioSocketChannel ch) throws Exception {
                         ChannelPipeline pipeline = ch.pipeline();
+                        int port = ch.localAddress().getPort();
+                        String string = portServiceMap.get(port);
+                        AckHandler ackHandler = new AckHandler(ch, new SignalChannelContext(proxyChannel), proxyId, string);
+                        ackHandlerMap.put(ch, ackHandler);
                         pipeline.addLast(clientHandler);
+                        pipeline.addLast(ackHandler);
                         pipeline.addLast(new LoggingHandler());
                     }
                 });
@@ -138,4 +147,9 @@ public class ProxyServer {
     public Server getServer() {
         return server;
     }
+
+    public Map<Channel, AckHandler> getAckHandlerMap() {
+        return ackHandlerMap;
+    }
+    
 }

@@ -4,6 +4,7 @@ import java.nio.charset.Charset;
 
 import com.alibaba.fastjson.JSONObject;
 import com.github.wormhole.client.Context;
+import com.github.wormhole.client.DataClient;
 import com.github.wormhole.common.utils.IDUtil;
 import com.github.wormhole.serialize.Frame;
 
@@ -19,23 +20,21 @@ public class AckHandler extends ChannelDuplexHandler{
 
     private long readByteCount;
 
+    private long ackCount;
+
     private Context context;
 
     private String proxyId;
 
     private String serviceKey;
 
-    private boolean isServerSide;
+    private Channel channel;
 
-    public AckHandler(boolean isServerSide) {
-        this.isServerSide = isServerSide;
-    }
-
-    public AckHandler(Context context, String proxyId, String serviceKey, boolean isServerSide) {
+    public AckHandler(Channel channel,Context context, String proxyId, String serviceKey) {
         this.context = context;
         this.proxyId = proxyId;
         this.serviceKey = serviceKey;
-        this.isServerSide = isServerSide;
+        this.channel = channel;
     }
 
     @Override
@@ -43,25 +42,6 @@ public class AckHandler extends ChannelDuplexHandler{
         ctx.fireChannelRead(msg);
         ByteBuf buf = (ByteBuf) msg;
         readByteCount += buf.readableBytes();
-        Frame frame = new Frame();
-        frame.setOpCode(0x3);
-        frame.setRequestId(IDUtil.genRequestId());
-        ByteBuf buffer = PooledByteBufAllocator.DEFAULT.buffer();
-        JSONObject jsonObject = new JSONObject();
-        Channel channel = ctx.channel();
-        String channelId = null;
-        if (isServerSide) {
-            channelId = channel.remoteAddress().toString() + "-" + channel.localAddress().toString();
-        } else {
-            channelId = channel.localAddress().toString() + "-" + channel.remoteAddress().toString();
-        }
-        jsonObject.put("channelId", channelId);
-        jsonObject.put("ackSize", readByteCount);
-        String jsonString = jsonObject.toJSONString();
-        buffer.writeCharSequence(jsonString, Charset.forName("UTF-8"));
-        buffer.writeLong(readByteCount);
-        frame.setPayload(buf);
-        context.write(frame);
     }
 
     @Override
@@ -69,13 +49,25 @@ public class AckHandler extends ChannelDuplexHandler{
         ctx.write(msg, promise);
         ByteBuf buf = (ByteBuf) msg;
         writeByteCount += buf.readableBytes();
+        Frame frame = new Frame();
+        frame.setOpCode(0x3);
+        frame.setRequestId(IDUtil.genRequestId());
+        frame.setServiceKey(serviceKey);
+        ByteBuf buffer = PooledByteBufAllocator.DEFAULT.buffer();
+        JSONObject jsonObject = new JSONObject();
+        Channel channel = ctx.channel();
+        String channelId = channel.remoteAddress().toString();
+        jsonObject.put("channelId", channelId);
+        jsonObject.put("ackSize", readByteCount);
+        String jsonString = jsonObject.toJSONString();
+        buffer.writeCharSequence(jsonString, Charset.forName("UTF-8"));
+        frame.setPayload(buf);
+        context.write(frame);
     }
 
-    public void reflush(Context context, String proxyId, String serviceKey) {
-        this.context = context;
-        this.proxyId = proxyId;
-        this.serviceKey = serviceKey;
-        this.readByteCount = 0;
-        this.writeByteCount = 0;
+    public void setAck(long ack) {
+        channel.eventLoop().submit(() -> {
+            AckHandler.this.ackCount = ack;
+        });
     }
 }
