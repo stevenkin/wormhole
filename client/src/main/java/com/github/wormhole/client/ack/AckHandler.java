@@ -61,7 +61,7 @@ public class AckHandler extends ChannelDuplexHandler{
         ByteBuf buffer = PooledByteBufAllocator.DEFAULT.buffer();
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("channelId", peerClientAddress);
-        jsonObject.put("ackSize", readByteCount);
+        jsonObject.put("ackSize", writeByteCount);
         String jsonString = jsonObject.toJSONString();
         buffer.writeCharSequence(jsonString, Charset.forName("UTF-8"));
         frame.setPayload(buf);
