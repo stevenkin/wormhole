@@ -19,6 +19,8 @@ public class DataClientPool {
 
     private Map<String, DataClient> assignedDataClients = new ConcurrentHashMap<>();
 
+    private Map<String, String> dataClientAssignedPeerMap = new ConcurrentHashMap<>();
+
     private Context context;
 
     private String serviceKey;
@@ -105,6 +107,14 @@ public class DataClientPool {
 
     public void setServiceKey(String serviceKey) {
         this.serviceKey = serviceKey;
+    }
+
+    public void setClientAssignedPeer(String peerAddress, String id) {
+        this.dataClientAssignedPeerMap.put(peerAddress, id);
+    }
+
+    public Map<String, String> getDataClientAssignedPeerMap() {
+        return dataClientAssignedPeerMap;
     }
     
 }

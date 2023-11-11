@@ -64,7 +64,7 @@ public class AckHandler extends ChannelDuplexHandler{
         jsonObject.put("ackSize", writeByteCount);
         String jsonString = jsonObject.toJSONString();
         buffer.writeCharSequence(jsonString, Charset.forName("UTF-8"));
-        frame.setPayload(buf);
+        frame.setPayload(buffer);
         context.write(frame);
     }
 

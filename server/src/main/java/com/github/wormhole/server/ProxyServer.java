@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.github.wormhole.client.DataClientPool;
 import com.github.wormhole.client.ack.AckHandler;
@@ -44,7 +45,7 @@ public class ProxyServer {
 
     private ClientHandler clientHandler;
 
-    private Map<Channel, AckHandler> ackHandlerMap;
+    private Map<Channel, AckHandler> ackHandlerMap = new ConcurrentHashMap<>();
 
     private Server server;
 

@@ -47,6 +47,7 @@ public abstract class Client<T> {
                         }
                     });
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            channel.close();
             clientGroup.shutdownGracefully().syncUninterruptibly();
         }));
     }

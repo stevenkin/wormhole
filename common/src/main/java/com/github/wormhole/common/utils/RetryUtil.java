@@ -10,9 +10,10 @@ public class RetryUtil {
     public static <T> void write( Channel channel, T msg) {
             Holder<GenericFutureListener> holder = new Holder<>();
             GenericFutureListener listener = f -> {
+                Object obj = msg;
                 if (!f.isSuccess()) {
                     Thread.sleep(100);
-                    channel.writeAndFlush(msg).addListener(holder.t);
+                    channel.writeAndFlush(obj).addListener(holder.t);
                 }
             };
             holder.t = listener;

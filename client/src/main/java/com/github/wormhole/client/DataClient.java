@@ -39,7 +39,7 @@ public class DataClient extends Client<ByteBuf>{
         pipeline.addLast(dataTransHandler);
         if (connType == 2) {
             this.ackHandler = new AckHandler(channel, context, context.id(), dataClientPool.getServiceKey(), peerClientAddress);
-            pipeline.addLast(ackHandler);
+            pipeline.addLast(ackHandler);   
         }
     }
 
@@ -92,6 +92,7 @@ public class DataClient extends Client<ByteBuf>{
 
     public void setPeerClientAddress(String peerClientAddress) {
         this.peerClientAddress = peerClientAddress;
+        dataClientPool.setClientAssignedPeer(peerClientAddress, getId());
     }
 
     public DataClientPool getDataClientPool() {
@@ -100,16 +101,6 @@ public class DataClient extends Client<ByteBuf>{
 
     public void setDataClientPool(DataClientPool dataClientPool) {
         this.dataClientPool = dataClientPool;
-    }
-
-    @Override
-    public String getId() {
-        if (connType == 1) {
-            return channel.localAddress().toString() + "-" + channel.remoteAddress().toString();
-        } else if (connType == 2) {
-            return peerClientAddress;
-        }
-        return null;
     }
 
     public AckHandler getAckHandler() {

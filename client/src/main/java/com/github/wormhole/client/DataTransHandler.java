@@ -10,10 +10,11 @@ import com.github.wormhole.serialize.Frame;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelPromise;
 import io.netty.channel.SimpleChannelInboundHandler;
 
-public class DataTransHandler extends SimpleChannelInboundHandler<ByteBuf> {
+public class DataTransHandler extends ChannelInboundHandlerAdapter {
     private DataClient dataClient;
 
     public DataTransHandler(DataClient dataClient) {
@@ -21,8 +22,8 @@ public class DataTransHandler extends SimpleChannelInboundHandler<ByteBuf> {
     }
 
     @Override
-    protected void channelRead0(ChannelHandlerContext ctx, ByteBuf msg) throws Exception {
-        dataClient.getDirectClient().send(msg);
+    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+        dataClient.getDirectClient().send((ByteBuf) msg);
     }
 
     @Override
