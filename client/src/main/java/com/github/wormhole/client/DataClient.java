@@ -93,6 +93,10 @@ public class DataClient extends Client<ByteBuf>{
     public void setPeerClientAddress(String peerClientAddress) {
         this.peerClientAddress = peerClientAddress;
         dataClientPool.setClientAssignedPeer(peerClientAddress, getId());
+        if (connType == 1) {
+            return;
+        }
+        ackHandler.setPeerClientAddress(peerClientAddress);
     }
 
     public DataClientPool getDataClientPool() {

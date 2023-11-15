@@ -58,10 +58,6 @@ public class DataTransHandler extends ChannelInboundHandlerAdapter{
         Channel channel = ctx.channel();
         Channel channel2 = clientChannelMap.get(channel);
         channel2.writeAndFlush(msg);
-        String string = server.getDataChannelProxyIdMap().get(channel.id().toString());
-        if (string != null) {
-             Channel channel3 = server.getProxyIdChannelMap().get(string);   
-        }
     }
 
     public void clear(String clientAddress) {

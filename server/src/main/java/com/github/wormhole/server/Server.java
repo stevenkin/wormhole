@@ -20,6 +20,7 @@ import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOption;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -63,6 +64,8 @@ public class Server {
 
         ServerBootstrap bootstrap = new ServerBootstrap();
         bootstrap.group(boss, worker)
+        .option(ChannelOption.AUTO_READ, true)
+        .option(ChannelOption.ALLOW_HALF_CLOSURE, true)
                 .channel(NioServerSocketChannel.class)
                 .handler(new LoggingHandler(LogLevel.DEBUG))
                 .childHandler(new ChannelInitializer<NioSocketChannel>() {
@@ -73,7 +76,7 @@ public class Server {
                         pipeline.addLast(new PackageDecoder());
                         pipeline.addLast(new PackageEncoder());
                         pipeline.addLast(signalHandler);
-                        pipeline.addLast(new LoggingHandler());
+                        pipeline.addLast(new LoggingHandler(LogLevel.DEBUG));
                     }
                 });
 

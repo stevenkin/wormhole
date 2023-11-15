@@ -31,9 +31,12 @@ public class DisconnectClientProcessor implements Processor{
         String serviceKey = msg.getServiceKey();
         DataClientPool dataClientPool = proxy.getDataChannelProcessor().getServiceClientPool().get(serviceKey);
         if (dataClientPool != null) {
-            DataClient assignedDataClient = dataClientPool.getAssignedDataClient(realClientAddress);
-            if (assignedDataClient != null) {
-                ((SocketChannel)(assignedDataClient.getChannel())).shutdownOutput();
+            String string = dataClientPool.getDataClientAssignedPeerMap().get(realClientAddress);
+            if (string != null) {
+                DataClient assignedDataClient = dataClientPool.getAssignedDataClient(string);
+                if (assignedDataClient != null) {
+                    ((SocketChannel)(assignedDataClient.getChannel())).shutdownOutput();
+                }
             }
         }
     }

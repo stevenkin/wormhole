@@ -12,6 +12,8 @@ import io.netty.channel.ChannelPipeline;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.logging.LogLevel;
+import io.netty.handler.logging.LoggingHandler;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -36,7 +38,10 @@ public abstract class Client<T> {
         this.context = context;
         this.clientBootstrap = new Bootstrap();
         this.clientGroup = new NioEventLoopGroup();
-        clientBootstrap.group(clientGroup).channel(NioSocketChannel.class)
+        clientBootstrap.group(clientGroup)
+        .option(ChannelOption.AUTO_READ, true)
+                    .option(ChannelOption.ALLOW_HALF_CLOSURE, true)
+                    .channel(NioSocketChannel.class)
                     .option(ChannelOption.TCP_NODELAY, true)
                     .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000)
                     .handler(new ChannelInitializer<SocketChannel>() {
@@ -44,6 +49,7 @@ public abstract class Client<T> {
                         @Override
                         public void initChannel(SocketChannel ch) {
                             initChannelPipeline(ch.pipeline());
+                            ch.pipeline().addLast(new LoggingHandler(LogLevel.DEBUG));
                         }
                     });
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {

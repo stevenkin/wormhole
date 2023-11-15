@@ -49,7 +49,6 @@ public class SignalClient extends Client<Frame>{
         pipeline.addLast(new PackageDecoder());
         pipeline.addLast(new PackageEncoder());
         pipeline.addLast(signalHandler);
-        pipeline.addLast(new LoggingHandler());
     }
 
     @Override

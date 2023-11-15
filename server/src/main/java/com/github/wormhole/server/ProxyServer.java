@@ -22,6 +22,7 @@ import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOption;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -63,8 +64,10 @@ public class ProxyServer {
         ServerBootstrap bootstrap = new ServerBootstrap();
 
         bootstrap.group(boss, worker)
-                .channel(NioServerSocketChannel.class)
+        .option(ChannelOption.ALLOW_HALF_CLOSURE, true)
+        .option(ChannelOption.AUTO_READ, true)
                 .handler(new LoggingHandler(LogLevel.DEBUG))
+                .channel(NioServerSocketChannel.class)
                 .childHandler(new ChannelInitializer<NioSocketChannel>() {
                     protected void initChannel(NioSocketChannel ch) throws Exception {
                         ChannelPipeline pipeline = ch.pipeline();
@@ -74,7 +77,7 @@ public class ProxyServer {
                         ackHandlerMap.put(ch, ackHandler);
                         pipeline.addLast(clientHandler);
                         pipeline.addLast(ackHandler);
-                        pipeline.addLast(new LoggingHandler());
+                        pipeline.addLast(new LoggingHandler(LogLevel.DEBUG));
                     }
                 });
         Map<String, ServiceConfig> map = config.getMap();

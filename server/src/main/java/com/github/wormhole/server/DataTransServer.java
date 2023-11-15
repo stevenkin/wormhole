@@ -13,6 +13,7 @@ import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOption;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -45,13 +46,15 @@ public class DataTransServer {
         ServerBootstrap bootstrap = new ServerBootstrap();
 
         bootstrap.group(boss, worker)
+        .option(ChannelOption.ALLOW_HALF_CLOSURE, true)
+        .option(ChannelOption.AUTO_READ, true)
                 .channel(NioServerSocketChannel.class)
                 .handler(new LoggingHandler(LogLevel.DEBUG))
                 .childHandler(new ChannelInitializer<NioSocketChannel>() {
                     protected void initChannel(NioSocketChannel ch) throws Exception {
                         ChannelPipeline pipeline = ch.pipeline();
                         pipeline.addLast(dataTransHandler);
-                        pipeline.addLast(new LoggingHandler());
+                        pipeline.addLast(new LoggingHandler(LogLevel.DEBUG));
                     }
                 });
 

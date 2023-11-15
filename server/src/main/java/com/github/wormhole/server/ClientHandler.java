@@ -57,7 +57,6 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
         String string = ctx.channel().remoteAddress().toString();
         ChannelFuture channelFuture = resMap.get(string);
         if (channelFuture != null) {
-            ((ByteBuf)msg).retain();
             channelFuture.addListener(f -> {
                 if (f.isSuccess()) {
                     Channel channel = dataChannelMap.get(ctx.channel());
@@ -69,6 +68,11 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
                 }
             });
         }
+    }
+
+    @Override
+    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        ctx.fireChannelInactive();
     }
 
     @Override

@@ -3,7 +3,9 @@ package com.github.wormhole.client;
 import javax.xml.crypto.Data;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Queue;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -53,8 +55,7 @@ public class DataClientPool {
                 DataClient dataClient = new DataClient(ip, port, connType, context, this);
                 try {
                     dataClient.connect();
-                    dataClientQueue.add(dataClient);
-                    client = dataClientQueue.poll();
+                    client = dataClient;
                     if (client != null) {
                         assignedDataClients.put(client.getId(), client);
                         return client;
@@ -71,6 +72,9 @@ public class DataClientPool {
 
     public void revert(DataClient dataClient) {
         dataClientQueue.add(dataClient);
+        assignedDataClients.remove(dataClient.getId());
+        Optional<Entry<String, String>> findFirst = dataClientAssignedPeerMap.entrySet().stream().filter(e -> e.getValue().equals(dataClient.getId())).findFirst();
+        findFirst.ifPresent(e -> dataClientAssignedPeerMap.remove(e.getKey()));
     }
 
     public DataClient getAssignedDataClient(String id) {

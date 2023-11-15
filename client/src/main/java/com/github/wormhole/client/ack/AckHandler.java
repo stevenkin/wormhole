@@ -87,5 +87,10 @@ public class AckHandler extends ChannelDuplexHandler{
         this.promise = promise;
     }
 
+    public void setPeerClientAddress(String peerClientAddress) {
+        this.peerClientAddress = peerClientAddress;
+    }
+
+    
     
 }
