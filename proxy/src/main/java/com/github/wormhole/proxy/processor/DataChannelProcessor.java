@@ -15,7 +15,9 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class DataChannelProcessor implements Processor{
     private Proxy proxy;
 
@@ -35,6 +37,7 @@ public class DataChannelProcessor implements Processor{
         String serviceKey = msg.getServiceKey();
         DataClient dataClient = proxy.getDataClientPool().take();
         dataClient.setPeerClientAddress(msg.getRealClientAddress());
+        log.info("内网代理与服务器建立数据传输通道{}", dataClient);
         DataClientPool dataClientPool = serviceClientPool.get(serviceKey);
         ServiceConfig serviceConfig = proxy.getConfig().getMap().get(serviceKey);
         if (dataClientPool == null) {
@@ -46,6 +49,7 @@ public class DataChannelProcessor implements Processor{
         serviceClient.setPeerClientAddress(msg.getRealClientAddress());
         serviceClient.refresh(dataClient);
         dataClient.refresh(serviceClient);
+        log.info("内网代理与内网服务建立数据传输通道{}", serviceClient);
         msg.setOpCode(0x20);
         msg.setProxyId(proxy.getProxyId());
         ByteBuf buffer = PooledByteBufAllocator.DEFAULT.buffer();
@@ -54,6 +58,7 @@ public class DataChannelProcessor implements Processor{
         buffer.writeCharSequence(key, Charset.forName("UTF-8"));
         msg.setPayload(buffer);
         ctx.writeAndFlush(msg);
+        log.info("DataChannelProcessor {}", msg);
     }
 
     public Proxy getProxy() {

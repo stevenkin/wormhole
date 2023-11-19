@@ -40,7 +40,6 @@ public abstract class Client<T> {
         this.clientGroup = new NioEventLoopGroup();
         clientBootstrap.group(clientGroup)
         .option(ChannelOption.AUTO_READ, true)
-                    .option(ChannelOption.ALLOW_HALF_CLOSURE, true)
                     .channel(NioSocketChannel.class)
                     .option(ChannelOption.TCP_NODELAY, true)
                     .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000)

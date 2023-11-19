@@ -8,6 +8,8 @@ import io.netty.channel.ChannelPipeline;
 import com.github.wormhole.client.ack.AckHandler;
 
 import io.netty.buffer.ByteBuf;
+import lombok.Data;
+import lombok.ToString;
 
 public class DataClient extends Client<ByteBuf>{
     private volatile DataClient directClient;
@@ -36,11 +38,11 @@ public class DataClient extends Client<ByteBuf>{
 
     @Override
     public void initChannelPipeline(ChannelPipeline pipeline) {
-        pipeline.addLast(dataTransHandler);
         if (connType == 2) {
             this.ackHandler = new AckHandler(channel, context, context.id(), dataClientPool.getServiceKey(), peerClientAddress);
             pipeline.addLast(ackHandler);   
         }
+        pipeline.addLast(dataTransHandler);
     }
 
     @Override
@@ -97,6 +99,7 @@ public class DataClient extends Client<ByteBuf>{
             return;
         }
         ackHandler.setPeerClientAddress(peerClientAddress);
+        this.ackHandler.clear();
     }
 
     public DataClientPool getDataClientPool() {
@@ -113,5 +116,10 @@ public class DataClient extends Client<ByteBuf>{
 
     public Context getContext() {
         return context;
+    }
+
+    @Override
+    public String toString() {
+        return "dataClient(" + connType + ":" + peerClientAddress + ")";
     }
 }

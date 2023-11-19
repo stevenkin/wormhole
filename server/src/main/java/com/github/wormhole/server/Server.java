@@ -65,7 +65,6 @@ public class Server {
         ServerBootstrap bootstrap = new ServerBootstrap();
         bootstrap.group(boss, worker)
         .option(ChannelOption.AUTO_READ, true)
-        .option(ChannelOption.ALLOW_HALF_CLOSURE, true)
                 .channel(NioServerSocketChannel.class)
                 .handler(new LoggingHandler(LogLevel.DEBUG))
                 .childHandler(new ChannelInitializer<NioSocketChannel>() {

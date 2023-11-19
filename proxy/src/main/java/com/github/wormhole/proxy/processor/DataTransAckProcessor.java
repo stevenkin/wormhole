@@ -12,7 +12,9 @@ import com.github.wormhole.serialize.Frame;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class DataTransAckProcessor implements Processor{
     private Proxy proxy;
 
@@ -27,6 +29,7 @@ public class DataTransAckProcessor implements Processor{
 
     @Override
     public void process(ChannelHandlerContext ctx, Frame msg) throws Exception {
+        log.info("代理ack{}", msg);
         String proxyId = msg.getProxyId();
         ByteBuf payload = msg.getPayload();
         String serviceKey = msg.getServiceKey();

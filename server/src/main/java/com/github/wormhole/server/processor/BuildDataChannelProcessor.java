@@ -31,6 +31,7 @@ public class BuildDataChannelProcessor implements Processor{
 
     @Override
     public void process(ChannelHandlerContext ctx, Frame msg) throws Exception {
+        log.info("内网代理与服务器建立数据通道成功{}", msg);
         int opCode = msg.getOpCode();
         String realClientAddress = msg.getRealClientAddress();
         String requestId = msg.getRequestId();

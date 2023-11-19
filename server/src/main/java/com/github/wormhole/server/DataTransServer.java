@@ -46,7 +46,6 @@ public class DataTransServer {
         ServerBootstrap bootstrap = new ServerBootstrap();
 
         bootstrap.group(boss, worker)
-        .option(ChannelOption.ALLOW_HALF_CLOSURE, true)
         .option(ChannelOption.AUTO_READ, true)
                 .channel(NioServerSocketChannel.class)
                 .handler(new LoggingHandler(LogLevel.DEBUG))

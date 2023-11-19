@@ -14,7 +14,9 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class AckHandler extends ChannelDuplexHandler{
     private long writeByteCount;
 
@@ -44,9 +46,10 @@ public class AckHandler extends ChannelDuplexHandler{
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        ctx.fireChannelRead(msg);
         ByteBuf buf = (ByteBuf) msg;
         readByteCount += buf.readableBytes();
+        log.info("收到{}数据{}", peerClientAddress, readByteCount);
+        ctx.fireChannelRead(msg);
     }
 
     @Override
@@ -66,6 +69,7 @@ public class AckHandler extends ChannelDuplexHandler{
         buffer.writeCharSequence(jsonString, Charset.forName("UTF-8"));
         frame.setPayload(buffer);
         context.write(frame);
+        log.info("发送给{}数据{}", peerClientAddress, writeByteCount);
     }
 
     public void setAck(long ack) {
@@ -91,6 +95,9 @@ public class AckHandler extends ChannelDuplexHandler{
         this.peerClientAddress = peerClientAddress;
     }
 
-    
+    public void clear() {
+        this.writeByteCount = 0;
+        this.readByteCount = 0;
+    }
     
 }

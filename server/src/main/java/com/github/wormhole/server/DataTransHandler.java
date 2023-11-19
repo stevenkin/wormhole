@@ -17,8 +17,10 @@ import io.netty.channel.ChannelInboundHandler;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.ChannelHandler.Sharable;
+import lombok.extern.slf4j.Slf4j;
 
 @Sharable
+@Slf4j
 public class DataTransHandler extends ChannelInboundHandlerAdapter{
     private Map<String, Channel> channalMap = new ConcurrentHashMap<>();
 
@@ -36,6 +38,7 @@ public class DataTransHandler extends ChannelInboundHandlerAdapter{
         Channel channel = ctx.channel();
         String key = channel.remoteAddress().toString() + "-" + channel.localAddress().toString();
         channalMap.put(key, channel);
+        log.info("内网代理与服务器建立数据传输通道{}", key);
     }
 
     @Override
@@ -43,6 +46,7 @@ public class DataTransHandler extends ChannelInboundHandlerAdapter{
         ctx.fireChannelInactive();
         Channel channel = ctx.channel();
         channalMap.remove(channel.id().toString());
+        log.info("内网代理与服务器关闭数据传输通道{}", channel);
     }
 
     public Channel getDataTransChannel(String channelId) {
@@ -58,6 +62,7 @@ public class DataTransHandler extends ChannelInboundHandlerAdapter{
         Channel channel = ctx.channel();
         Channel channel2 = clientChannelMap.get(channel);
         channel2.writeAndFlush(msg);
+        log.info("读取来自内网代理的数据，并发送给客户端{},{}", channel, channel2);
     }
 
     public void clear(String clientAddress) {

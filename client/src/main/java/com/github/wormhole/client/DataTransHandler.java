@@ -13,7 +13,9 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelPromise;
 import io.netty.channel.SimpleChannelInboundHandler;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class DataTransHandler extends ChannelInboundHandlerAdapter {
     private DataClient dataClient;
 
@@ -23,6 +25,7 @@ public class DataTransHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+        log.info("转发对端传来的数据{}-{}", dataClient, dataClient.getDirectClient());
         dataClient.getDirectClient().send((ByteBuf) msg);
     }
 
@@ -35,12 +38,14 @@ public class DataTransHandler extends ChannelInboundHandlerAdapter {
         AckHandler ackHandler = dataClient.getAckHandler();
 
        if (ackHandler.isAckComplate()) {
+           log.info("内网服务关闭连接{}", closePeer);
             dataClient.getContext().write(closePeer);
             return;
        }
        ChannelPromise newPromise = ctx.channel().newPromise();
        ackHandler.setPromise(newPromise);
        newPromise.addListener(f -> {
+            log.info("内网服务关闭连接{}", closePeer);
             dataClient.getContext().write(closePeer);
        });
     }

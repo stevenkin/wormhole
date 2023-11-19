@@ -11,7 +11,9 @@ import com.github.wormhole.serialize.Frame;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.socket.SocketChannel;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class DisconnectClientProcessor implements Processor{
     private Proxy proxy;
 
@@ -26,6 +28,7 @@ public class DisconnectClientProcessor implements Processor{
 
     @Override
     public void process(ChannelHandlerContext ctx, Frame msg) throws Exception {
+        log.info("关闭代理与内网服务的链接{}", msg);
         ByteBuf payload = msg.getPayload();
         String realClientAddress = msg.getRealClientAddress();
         String serviceKey = msg.getServiceKey();

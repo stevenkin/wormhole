@@ -21,8 +21,10 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelPromise;
 import io.netty.channel.ChannelHandler.Sharable;
+import lombok.extern.slf4j.Slf4j;
 
 @Sharable
+@Slf4j
 public class ClientHandler extends ChannelInboundHandlerAdapter {
     private ProxyServer proxyServer;
 
@@ -50,10 +52,13 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
         resMap.put(frame.getRealClientAddress(), ctx.channel().newPromise());
         clientChannelMap.put(frame.getRealClientAddress(), ctx.channel());
         proxyServer.sendToProxy(frame);
+        log.info("客户端连接{}", frame);
+        ctx.fireChannelActive();
     }
 
      @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+        log.info("收到客户端数据{}", ctx.channel().remoteAddress().toString());
         String string = ctx.channel().remoteAddress().toString();
         ChannelFuture channelFuture = resMap.get(string);
         if (channelFuture != null) {
@@ -61,6 +66,7 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
                 if (f.isSuccess()) {
                     Channel channel = dataChannelMap.get(ctx.channel());
                     if (channel != null && channel.isActive()) {
+                        log.info("发送给代理{}", channel);
                         channel.writeAndFlush(msg).addListener(f1 -> {
                             resMap.remove(string);
                         });
@@ -78,6 +84,8 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
         ctx.fireChannelReadComplete();
+        log.info("ReadComplete{}", ctx.channel().remoteAddress().toString());
+        ctx.fireChannelReadComplete();
         String address = ctx.channel().remoteAddress().toString();
         clear(address);
         
@@ -94,12 +102,14 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
         AckHandler ackHandler = proxyServer.getAckHandlerMap().get(ctx.channel());
         if (ackHandler != null) {
             if (ackHandler.isAckComplate()) {
+                log.info("数据已全部发给内网服务{}", frame);
                 proxyServer.sendToProxy(frame);
                 return;
            }
            ChannelPromise newPromise = ctx.channel().newPromise();
            ackHandler.setPromise(newPromise);
            newPromise.addListener(f -> {
+               log.info("数据已全部发给内网服务{}", frame);
                 proxyServer.sendToProxy(frame);
            });   
         }

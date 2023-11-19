@@ -24,7 +24,9 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class Proxy implements Context{
     private static Proxy proxy;
 
@@ -78,6 +80,7 @@ public class Proxy implements Context{
         RetryUtil.writeLimitTime(new Connection() {
             @Override
             public ChannelFuture write(Object msg) {
+                log.info("内网代理发送给服务器建立连接请求{}", msg);
                 return channel.writeAndFlush(msg);
             }
         }, frame, 3);

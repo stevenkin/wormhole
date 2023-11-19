@@ -46,6 +46,7 @@ public class ProxyRegisterProcessor implements Processor{
         frame.setRequestId(IDUtil.genRequestId());
         frame.setProxyId(proxyId);
         RetryUtil.write(ctx.channel(), frame);
+        log.info("内网代理与服务器建立连接{}", frame);
     }
     
 }

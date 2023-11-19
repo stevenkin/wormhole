@@ -8,7 +8,9 @@ import com.github.wormhole.server.Server;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.socket.SocketChannel;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class DisconnectClientPocessor implements Processor{
     private Server server;
 
@@ -23,6 +25,7 @@ public class DisconnectClientPocessor implements Processor{
 
     @Override
     public void process(ChannelHandlerContext ctx, Frame msg) throws Exception {
+        log.info("关闭客户端链接{}", msg);
         ProxyServer proxyServer = server.getProxyServer(msg.getProxyId());
         if (proxyServer != null) {
             Channel channel = proxyServer.getClientHandler().getClientChannelMap().get(msg.getRealClientAddress());

@@ -36,7 +36,7 @@ public class DataClientPool {
     private Queue<DataClient> dataClientQueue = new LinkedBlockingQueue<>();
 
     public void init() {
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 1; i++) {
             DataClient dataClient = new DataClient(ip, port, connType, context, this);
             try {
                 dataClient.connect();

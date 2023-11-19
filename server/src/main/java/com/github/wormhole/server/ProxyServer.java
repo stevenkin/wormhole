@@ -64,7 +64,6 @@ public class ProxyServer {
         ServerBootstrap bootstrap = new ServerBootstrap();
 
         bootstrap.group(boss, worker)
-        .option(ChannelOption.ALLOW_HALF_CLOSURE, true)
         .option(ChannelOption.AUTO_READ, true)
                 .handler(new LoggingHandler(LogLevel.DEBUG))
                 .channel(NioServerSocketChannel.class)
@@ -75,8 +74,8 @@ public class ProxyServer {
                         String string = portServiceMap.get(port);
                         AckHandler ackHandler = new AckHandler(ch, new SignalChannelContext(proxyChannel), proxyId, string, ch.remoteAddress().toString());
                         ackHandlerMap.put(ch, ackHandler);
-                        pipeline.addLast(clientHandler);
                         pipeline.addLast(ackHandler);
+                        pipeline.addLast(clientHandler);
                         pipeline.addLast(new LoggingHandler(LogLevel.DEBUG));
                     }
                 });
