@@ -29,12 +29,12 @@ public class DisconnectClientProcessor implements Processor{
     @Override
     public void process(ChannelHandlerContext ctx, Frame msg) throws Exception {
         log.info("关闭代理与内网服务的链接{}", msg);
-        ByteBuf payload = msg.getPayload();
         String realClientAddress = msg.getRealClientAddress();
         String serviceKey = msg.getServiceKey();
         DataClientPool dataClientPool = proxy.getDataChannelProcessor().getServiceClientPool().get(serviceKey);
         if (dataClientPool != null) {
             String string = dataClientPool.getDataClientAssignedPeerMap().get(realClientAddress);
+            log.info("关闭代理与内网服务的链接 {}-{}", realClientAddress, string);
             if (string != null) {
                 DataClient assignedDataClient = dataClientPool.getAssignedDataClient(string);
                 if (assignedDataClient != null) {

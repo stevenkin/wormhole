@@ -50,6 +50,7 @@ public class BuildDataChannelProcessor implements Processor{
                     server.getDataChannelProxyIdMap().put(dataChannelId, proxyId);
                     proxyServer.getClientHandler().success(realClientAddress);
                 } else {
+                    log.info("内网代理与服务器fail{},{},{}", msg, clientChannel, dataTransChannel);
                     proxyServer.getClientHandler().fail(realClientAddress);
                 }
             }

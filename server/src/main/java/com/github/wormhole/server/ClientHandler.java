@@ -21,6 +21,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelPromise;
 import io.netty.channel.ChannelHandler.Sharable;
+import io.netty.channel.socket.ChannelInputShutdownEvent;
 import lombok.extern.slf4j.Slf4j;
 
 @Sharable
@@ -73,6 +74,12 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
                     }
                 }
             });
+        } else {
+            Channel channel = dataChannelMap.get(ctx.channel());
+            if (channel != null && channel.isActive()) {
+                log.info("发送给代理{}", channel);
+                channel.writeAndFlush(msg);
+            }
         }
     }
 
@@ -82,10 +89,12 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
     }
 
     @Override
-    public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
-        ctx.fireChannelReadComplete();
-        log.info("ReadComplete{}", ctx.channel().remoteAddress().toString());
-        ctx.fireChannelReadComplete();
+    public void userEventTriggered(ChannelHandlerContext ctx, Object obj) throws Exception {
+        if (!(obj instanceof ChannelInputShutdownEvent)) {
+            return;
+        }
+        log.info("ChannelInputShutdownEvent{}", ctx.channel().remoteAddress().toString());
+
         String address = ctx.channel().remoteAddress().toString();
         clear(address);
         
@@ -125,7 +134,7 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
     public void fail(String address) {
         ChannelPromise remove = resMap.get(address);
         if (remove != null) {
-            remove.setFailure(null);
+            remove.setFailure(new RuntimeException());
         }
         refuse(address);
     }

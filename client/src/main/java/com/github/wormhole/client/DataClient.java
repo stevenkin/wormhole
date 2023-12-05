@@ -50,6 +50,13 @@ public class DataClient extends Client<ByteBuf>{
         return channel.writeAndFlush(msg);
     }
 
+    @Override
+    protected void init() {
+        if (connType == 2) {
+            this.ackHandler.setChannel(this.channel);
+        }
+    }
+
     public void refresh(DataClient directClient) {
         this.directClient = directClient;
     }
@@ -120,6 +127,6 @@ public class DataClient extends Client<ByteBuf>{
 
     @Override
     public String toString() {
-        return "dataClient(" + connType + ":" + peerClientAddress + ")";
+        return "dataClient(" + connType + ":" + peerClientAddress + ":" + getId() +")";
     }
 }

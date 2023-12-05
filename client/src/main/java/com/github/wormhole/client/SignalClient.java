@@ -62,5 +62,10 @@ public class SignalClient extends Client<Frame>{
         RetryUtil.write(channel, msg);
         return newPromise;
     }
-    
+
+    @Override
+    protected void init() {
+
+    }
+
 }
