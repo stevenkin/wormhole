@@ -1,14 +1,12 @@
 {
-  "mysql": {
+  "http": {
     "ip": "127.0.0.1",
-    "port": "3306",
-    "mappingPort": "3308"
-  },
-  "ssh": {
-    "ip": "127.0.0.1",
-    "port": "22",
-    "mappingPort": "2201"
+    "port": "8080",
+    "mappingPort": "8090"
   },
   "serverHost": "127.0.0.1",
-  "serverPort": 8080
+  "serverPort": 9000,
+  "dataTransPort": 9100,
+  "username":"wjg",
+  "password": "123456"
 }

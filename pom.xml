@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0     http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.2.0</version>
+    </parent>
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.github</groupId>
     <artifactId>wormhole</artifactId>
@@ -15,13 +20,57 @@
         <module>common</module>
   </modules>
     <properties>
-        <lombok.version>1.18.12</lombok.version>
+        <lombok.version>1.18.24</lombok.version>
         <fastjson.version>1.2.59</fastjson.version>
-        <maven.compiler.source>8</maven.compiler.source>
-        <maven.compiler.target>8</maven.compiler.target>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
+        <graal-sdk.version>21.3.0</graal-sdk.version>
     </properties>
+    <profiles>
+        <profile>
+            <id>native</id>
+            <build>
+                <pluginManagement>
+                    <plugins>
+                        <plugin>
+                            <groupId>org.springframework.boot</groupId>
+                            <artifactId>spring-boot-maven-plugin</artifactId>
+                        </plugin>
+                        <plugin>
+                            <groupId>org.graalvm.buildtools</groupId>
+                            <artifactId>native-maven-plugin</artifactId>
+                            <configuration>
+                                <buildArgs>
+                                    --no-fallback
+                                    --initialize-at-build-time=org.slf4j
+                                    --initialize-at-build-time=ch.qos.logback
+                                    --report-unsupported-elements-at-runtime
+                                    --allow-incomplete-classpath
+                                    -H:+ReportExceptionStackTraces
+                                </buildArgs>
+                            </configuration>
+                            <executions>
+                                <execution>
+                                    <id>build-image</id>
+                                    <goals>
+                                        <goal>compile-no-fork</goal>
+                                    </goals>
+                                </execution>
+                            </executions>
+                        </plugin>
+                    </plugins>
+                </pluginManagement>
+            </build>
+        </profile>
+    </profiles>
 
     <dependencies>
+        <dependency>
+            <groupId>org.graalvm.sdk</groupId>
+            <artifactId>graal-sdk</artifactId>
+            <version>${graal-sdk.version}</version>
+            <scope>provided</scope>
+        </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
@@ -38,7 +87,6 @@
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <version>${lombok.version}</version>
-            <scope>provided</scope>
         </dependency>
 
         <!-- slf4j + logback: -->
@@ -69,30 +117,5 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
-
-    <build>
-    <plugins>
-        <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <configuration>  
-                <source>1.8</source>  
-                <target>1.8</target>  
-                <encoding>UTF-8</encoding>
-          <!-- 指定编码格式，否则在DOS下运行mvn compile命令时会出现莫名的错误，因为系统默认使用GBK编码 -->  
-              </configuration> 
-        <version>2.3.2</version>
-        </plugin>
-        <plugin>  
-              <groupId>org.apache.maven.plugins</groupId>  
-               <artifactId>maven-resources-plugin</artifactId>  
-               <version>2.6</version>  
-               <configuration>  
-                   <encoding>UTF-8</encoding>
-          <!-- 指定编码格式，否则在DOS下运行mvn命令时当发生文件资源copy时将使用系统默认使用GBK编码 -->  
-               </configuration>  
-           </plugin>  
-    </plugins>
-    </build>
 
 </project>

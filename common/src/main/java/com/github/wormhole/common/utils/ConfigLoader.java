@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONObject;
 
 import org.apache.commons.io.IOUtils;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -15,7 +16,7 @@ import com.github.wormhole.common.config.ProxyServiceConfig.ServiceConfig;
 
 public class ConfigLoader {
     public static ProxyServiceConfig load(String path) throws IOException {
-        InputStream inputStream = ConfigLoader.class.getResourceAsStream(path);
+        InputStream inputStream = new FileInputStream(path);
         byte[] bytes = IOUtils.toByteArray(inputStream);
         String s = new String(bytes, StandardCharsets.UTF_8);
         ProxyServiceConfig parse = parse(s);

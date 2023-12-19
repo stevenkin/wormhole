@@ -25,6 +25,7 @@ import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 
 @Slf4j
 public class Proxy implements Context{
@@ -48,8 +49,10 @@ public class Proxy implements Context{
 
     private DataChannelProcessor dataChannelProcessor;
 
-    public Proxy() throws Exception {
-        String configPath = "/config.json";
+    public Proxy(String configPath) throws Exception {
+        if (StringUtils.isEmpty(configPath)) {
+            throw new RuntimeException("must exist config file");
+        }
         this.config = ConfigLoader.load(configPath);
         this.serverHost = config.getServerHost();
         this.serverPort = config.getServerPort();
@@ -87,8 +90,23 @@ public class Proxy implements Context{
     }
 
     public static void main(String[] args) throws Exception {
-        proxy = new Proxy();
-        proxy.start();
+        String path = null;
+        if (args != null && args.length > 0) {
+            for (int i = 0; i < args.length; i++) {
+                if (StringUtils.isNotEmpty(args[i]) && args[i].equals("--configPath")) {
+                    if (i + 1 < args.length) {
+                        String arg = args[i + 1];
+                        if (StringUtils.isNotEmpty(arg)) {
+                            path = arg;
+                        }
+                    }
+                }
+            }
+            if (StringUtils.isNotEmpty(path)) {
+                proxy = new Proxy(path);
+                proxy.start();
+            }
+        }
     }
 
     public String getServerHost() {

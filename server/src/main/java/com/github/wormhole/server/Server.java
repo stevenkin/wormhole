@@ -120,8 +120,6 @@ public class Server {
 
     public static void main(String[] args) {
         String port = null;
-        String redisIp = null;
-        Integer redisPort = null;
         Integer dataTransPort = null;
         if (args != null && args.length > 0) {
             for (int i = 0; i < args.length; i++) {
@@ -130,20 +128,6 @@ public class Server {
                         String arg = args[i + 1];
                         if (StringUtils.isNotEmpty(arg)) {
                             port = arg;
-                        }
-                    }
-                } else if (StringUtils.isNotEmpty(args[i]) && args[i].equals("--redisIp")) {
-                    if (i + 1 < args.length) {
-                        String arg = args[i + 1];
-                        if (StringUtils.isNotEmpty(arg)) {
-                            redisIp = arg;
-                        }
-                    }
-                } else if (StringUtils.isNotEmpty(args[i]) && args[i].equals("--redisPort")) {
-                    if (i + 1 < args.length) {
-                        String arg = args[i + 1];
-                        if (StringUtils.isNotEmpty(arg)) {
-                            redisPort = Integer.parseInt(arg);
                         }
                     }
                 } else if (StringUtils.isNotEmpty(args[i]) && args[i].equals("--dataTransPort")) {
@@ -155,7 +139,7 @@ public class Server {
                     }
                 }
             }
-            if (port != null  && redisPort != null && StringUtils.isNotEmpty(redisIp) && dataTransPort != null) {
+            if (port != null && dataTransPort != null) {
                 new Server(Integer.parseInt(port), dataTransPort).open();
             }
         }
