@@ -1,10 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0     http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <parent>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.2.0</version>
-    </parent>
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.github</groupId>
     <artifactId>wormhole</artifactId>
@@ -36,28 +31,6 @@
                             <groupId>org.springframework.boot</groupId>
                             <artifactId>spring-boot-maven-plugin</artifactId>
                         </plugin>
-                        <plugin>
-                            <groupId>org.graalvm.buildtools</groupId>
-                            <artifactId>native-maven-plugin</artifactId>
-                            <configuration>
-                                <buildArgs>
-                                    --no-fallback
-                                    --initialize-at-build-time=org.slf4j
-                                    --initialize-at-build-time=ch.qos.logback
-                                    --report-unsupported-elements-at-runtime
-                                    --allow-incomplete-classpath
-                                    -H:+ReportExceptionStackTraces
-                                </buildArgs>
-                            </configuration>
-                            <executions>
-                                <execution>
-                                    <id>build-image</id>
-                                    <goals>
-                                        <goal>compile-no-fork</goal>
-                                    </goals>
-                                </execution>
-                            </executions>
-                        </plugin>
                     </plugins>
                 </pluginManagement>
             </build>
@@ -66,15 +39,15 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.graalvm.sdk</groupId>
-            <artifactId>graal-sdk</artifactId>
-            <version>${graal-sdk.version}</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
             <version>3.8</version>
+        </dependency>
+        <dependency>
+            <groupId>org.graalvm.sdk</groupId>
+            <artifactId>graal-sdk</artifactId>
+            <version>21.0.0</version>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>
@@ -87,6 +60,13 @@
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <version>${lombok.version}</version>
+        </dependency>
+
+        <!-- slf4j + logback: -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.7.12</version>
         </dependency>
 
         <!-- slf4j + logback: -->
