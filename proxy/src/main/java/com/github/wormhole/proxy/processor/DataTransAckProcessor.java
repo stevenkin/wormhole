@@ -39,12 +39,9 @@ public class DataTransAckProcessor implements Processor{
         Long long1 = parseObject.getLong("ackSize");
         DataClientPool dataClientPool = proxy.getDataChannelProcessor().getServiceClientPool().get(serviceKey);
         if (dataClientPool != null) {
-            String s = dataClientPool.getDataClientAssignedPeerMap().get(string2);
-            if (s != null) {
-                DataClient assignedDataClient = dataClientPool.getAssignedDataClient(s);
-                if (assignedDataClient != null) {
-                    assignedDataClient.getAckHandler().setAck(long1);
-                }
+            DataClient assignedDataClient = dataClientPool.getAssignedDataClient(string2);
+            if (assignedDataClient != null) {
+                assignedDataClient.getAckHandler().setAck(long1);
             }
         }
     }

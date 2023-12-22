@@ -55,26 +55,21 @@ public class AckHandler extends ChannelDuplexHandler{
     @Override
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
         ctx.write(msg, promise);
-        promise.addListener(f -> {
-            if (f.isSuccess()) {
-                ByteBuf buf = (ByteBuf) msg;
-                writeByteCount += buf.readableBytes();
-                Frame frame = new Frame();
-                frame.setOpCode(0x3);
-                frame.setRequestId(IDUtil.genRequestId());
-                frame.setServiceKey(serviceKey);
-                ByteBuf buffer = PooledByteBufAllocator.DEFAULT.buffer();
-                JSONObject jsonObject = new JSONObject();
-                jsonObject.put("channelId", peerClientAddress);
-                jsonObject.put("ackSize", writeByteCount);
-                String jsonString = jsonObject.toJSONString();
-                buffer.writeCharSequence(jsonString, Charset.forName("UTF-8"));
-                frame.setPayload(buffer);
-                context.write(frame);
-                log.info("发送给{}数据{}", peerClientAddress, writeByteCount);
-            }
-        });
-
+        ByteBuf buf = (ByteBuf) msg;
+        writeByteCount += buf.readableBytes();
+        Frame frame = new Frame();
+        frame.setOpCode(0x3);
+        frame.setRequestId(IDUtil.genRequestId());
+        frame.setServiceKey(serviceKey);
+        ByteBuf buffer = PooledByteBufAllocator.DEFAULT.buffer();
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("channelId", peerClientAddress);
+        jsonObject.put("ackSize", writeByteCount);
+        String jsonString = jsonObject.toJSONString();
+        buffer.writeCharSequence(jsonString, Charset.forName("UTF-8"));
+        frame.setPayload(buffer);
+        context.write(frame);
+        log.info("发送给{}数据{}", peerClientAddress, writeByteCount);
     }
 
     public void setAck(long ack) {
@@ -104,8 +99,5 @@ public class AckHandler extends ChannelDuplexHandler{
         this.writeByteCount = 0;
         this.readByteCount = 0;
     }
-
-    public void setChannel(Channel channel) {
-        this.channel = channel;
-    }
+    
 }

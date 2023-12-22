@@ -67,11 +67,8 @@ public abstract class Client<T> {
          */
         this.channel = doConnect(ip, port, 5);
         this.id = this.channel.id().toString();
-        init();
         return channel;
     }
-
-    protected abstract void init();
 
     private Channel doConnect(String ip, int port, int retry) throws InterruptedException {
         ChannelFuture future = null;

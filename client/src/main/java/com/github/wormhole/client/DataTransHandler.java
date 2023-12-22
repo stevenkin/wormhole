@@ -13,7 +13,6 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelPromise;
 import io.netty.channel.SimpleChannelInboundHandler;
-import io.netty.channel.socket.ChannelInputShutdownEvent;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -31,26 +30,24 @@ public class DataTransHandler extends ChannelInboundHandlerAdapter {
     }
 
     @Override
-    public void userEventTriggered(ChannelHandlerContext ctx, Object obj) throws Exception {
+    public void channelReadComplete(ChannelHandlerContext ctx) {
         if (dataClient.getConnType() != 2) {
             return;
         }
-        if (obj instanceof ChannelInputShutdownEvent) {
-            Frame closePeer = closePeer();
-            AckHandler ackHandler = dataClient.getAckHandler();
+        Frame closePeer = closePeer();
+        AckHandler ackHandler = dataClient.getAckHandler();
 
-            if (ackHandler.isAckComplate()) {
-                log.info("内网服务关闭连接{}", closePeer);
-                dataClient.getContext().write(closePeer);
-                return;
-            }
-            ChannelPromise newPromise = ctx.channel().newPromise();
-            ackHandler.setPromise(newPromise);
-            newPromise.addListener(f -> {
-                log.info("内网服务关闭连接{}", closePeer);
-                dataClient.getContext().write(closePeer);
-            });
-        }
+       if (ackHandler.isAckComplate()) {
+           log.info("内网服务关闭连接{}", closePeer);
+            dataClient.getContext().write(closePeer);
+            return;
+       }
+       ChannelPromise newPromise = ctx.channel().newPromise();
+       ackHandler.setPromise(newPromise);
+       newPromise.addListener(f -> {
+            log.info("内网服务关闭连接{}", closePeer);
+            dataClient.getContext().write(closePeer);
+       });
     }
 
     private Frame closePeer() {
@@ -59,6 +56,7 @@ public class DataTransHandler extends ChannelInboundHandlerAdapter {
         frame.setProxyId(dataClient.getContext().id());
         frame.setServiceKey(dataClient.getDataClientPool().getServiceKey());
         frame.setRealClientAddress(dataClient.getPeerClientAddress());
+        frame.setRequestId(IDUtil.genRequestId());
         return frame;
     }
 }
