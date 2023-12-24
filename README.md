@@ -44,4 +44,7 @@ java -jar proxy-1.0.0-SNAPSHOT-jar-with-dependencies.jar --serverHost 127.0.0.1 
 ### 设计
 ![这是图片](./doc.png "这是图片")
 
+### 性能测试
+![这是图片](./test.png "这是图片")
+
 
